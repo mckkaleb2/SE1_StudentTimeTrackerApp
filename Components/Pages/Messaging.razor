@@ -6,3 +6,61 @@
 <p>Wow so awesome</p>
 <p>Hamburger menu with user options goes to the left</p>
 <p>Messaging to the right maybe?</p>
+
+<div class="row">
+    <div class="column left">
+        <input type="text" class="form-control" placeholder="Search users...">
+        <h5> Users </h5>
+            <ul class="users">
+                <li> Us01 </li>
+                <li> Us02 </li>
+                <li> Us03 </li>
+                <li> Us04 </li>
+                <li> Us05 </li>
+                <li> Us06 </li>
+                <li> Us07 </li>
+                <li> Us08 </li>
+            </ul>
+    </div>
+    <div class="column right">
+        <h5> User ID </h5>
+        <p> The message logs </p>
+    </div>
+</div>
+
+<style>
+    .column {
+        float: left;
+        border: 2px solid gray;
+    }
+
+    .left {
+        width: 15%
+    }
+
+    .right {
+        width: 85%
+    }
+
+    /* Clear floats after the columns */
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    .users{
+        list-style-type: none;
+        padding: 2px;
+    }
+
+    li{
+        padding-bottom: 1px;
+        border-bottom: 1px dashed lightgray;
+        padding-top: 1px;
+    }
+
+    li:last-child{
+        border-bottom: none;
+    }
+</style>
