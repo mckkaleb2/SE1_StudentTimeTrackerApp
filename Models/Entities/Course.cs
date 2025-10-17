@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using StudentTimeTrackerApp.Entities;
 
 namespace StudentTimeTrackerApp.Models.Entities
 {
@@ -9,6 +10,7 @@ namespace StudentTimeTrackerApp.Models.Entities
         public string CourseCode { get; set; } = string.Empty;
         public int CourseNum { get; set; }
         public int SectionNum {  get; set; }
+
         public ICollection<Student> Students { get; set; } = new List<Student>();
         public ICollection<Instructor> Instructors { get; set; } = new List<Instructor>();
 

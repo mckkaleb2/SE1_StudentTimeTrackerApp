@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentTimeTrackerApp.Data;
 
@@ -11,9 +12,11 @@ using StudentTimeTrackerApp.Data;
 namespace StudentTimeTrackerApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251017222543_InitialClasses")]
+    partial class InitialClasses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,51 +24,6 @@ namespace StudentTimeTrackerApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("CourseInstructor", b =>
-                {
-                    b.Property<int>("CoursesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("InstructorsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CoursesId", "InstructorsId");
-
-                    b.HasIndex("InstructorsId");
-
-                    b.ToTable("CourseInstructor");
-                });
-
-            modelBuilder.Entity("CourseStudent", b =>
-                {
-                    b.Property<int>("CoursesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CoursesId", "StudentsId");
-
-                    b.HasIndex("StudentsId");
-
-                    b.ToTable("CourseStudent");
-                });
-
-            modelBuilder.Entity("InstructorStudent", b =>
-                {
-                    b.Property<int>("InstructorsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentsId")
-                        .HasColumnType("int");
-
-                    b.HasKey("InstructorsId", "StudentsId");
-
-                    b.HasIndex("StudentsId");
-
-                    b.ToTable("InstructorStudent");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -267,15 +225,18 @@ namespace StudentTimeTrackerApp.Migrations
 
             modelBuilder.Entity("StudentTimeTrackerApp.Entities.Instructor", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
                     b.Property<string>("ANum")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -294,7 +255,9 @@ namespace StudentTimeTrackerApp.Migrations
                     b.Property<bool>("isAdmin")
                         .HasColumnType("bit");
 
-                    b.HasKey("Id");
+                    b.HasKey("ID");
+
+                    b.HasIndex("CourseId");
 
                     b.ToTable("Instructors");
                 });
@@ -310,6 +273,9 @@ namespace StudentTimeTrackerApp.Migrations
                     b.Property<string>("ANum")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -330,6 +296,8 @@ namespace StudentTimeTrackerApp.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
 
                     b.HasIndex("UserID");
 
@@ -357,51 +325,6 @@ namespace StudentTimeTrackerApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Courses");
-                });
-
-            modelBuilder.Entity("CourseInstructor", b =>
-                {
-                    b.HasOne("StudentTimeTrackerApp.Models.Entities.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CoursesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentTimeTrackerApp.Entities.Instructor", null)
-                        .WithMany()
-                        .HasForeignKey("InstructorsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CourseStudent", b =>
-                {
-                    b.HasOne("StudentTimeTrackerApp.Models.Entities.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CoursesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentTimeTrackerApp.Entities.Student", null)
-                        .WithMany()
-                        .HasForeignKey("StudentsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("InstructorStudent", b =>
-                {
-                    b.HasOne("StudentTimeTrackerApp.Entities.Instructor", null)
-                        .WithMany()
-                        .HasForeignKey("InstructorsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StudentTimeTrackerApp.Entities.Student", null)
-                        .WithMany()
-                        .HasForeignKey("StudentsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -455,8 +378,19 @@ namespace StudentTimeTrackerApp.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("StudentTimeTrackerApp.Entities.Instructor", b =>
+                {
+                    b.HasOne("StudentTimeTrackerApp.Models.Entities.Course", null)
+                        .WithMany("Instructors")
+                        .HasForeignKey("CourseId");
+                });
+
             modelBuilder.Entity("StudentTimeTrackerApp.Entities.Student", b =>
                 {
+                    b.HasOne("StudentTimeTrackerApp.Models.Entities.Course", null)
+                        .WithMany("Students")
+                        .HasForeignKey("CourseId");
+
                     b.HasOne("StudentTimeTrackerApp.Data.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
@@ -464,6 +398,13 @@ namespace StudentTimeTrackerApp.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StudentTimeTrackerApp.Models.Entities.Course", b =>
+                {
+                    b.Navigation("Instructors");
+
+                    b.Navigation("Students");
                 });
 #pragma warning restore 612, 618
         }
