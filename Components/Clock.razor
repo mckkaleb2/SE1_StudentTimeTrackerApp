@@ -1,0 +1,104 @@
+<div>
+    <h3>Clock in/out</h3>
+    <h5>Current Time:</h5>
+    <p>@currentTime.ToString("HH:mm:ss")</p>
+
+    <button class="btn btn-primary" @onclick="ClockIn">Clock In</button>
+    <button class="btn btn-secondary">Clock Out</button>
+
+    <p>Clock in time: @clockInTime</p>
+    <p>Clock out time: @clockOutTime</p>
+
+    <div class="mt-3">
+        <h6>Last Clock In Location:</h6>
+        @if (locationError != null)
+        {
+            <p class="text-danger">@locationError</p>
+        }
+        else if (latitude.HasValue && longitude.HasValue)
+        {
+            <p>Latitude: @latitude</p>
+            <p>Longitude: @longitude</p>
+            <p>Accuracy (m): @accuracy</p>
+        }
+        else
+        {
+            <p>No location captured yet.</p>
+        }
+    </div>
+</div>
+
+@inject IJSRuntime JS
+
+@code {
+    private DateTime currentTime;
+    private double? latitude;
+    private double? longitude;
+    private double? accuracy;
+    private string? locationError;
+    private DateTime clockInTime;
+    private DateTime clockOutTime;
+
+    protected override void OnInitialized()
+    {
+        currentTime = DateTime.Now;
+        var timer = new System.Timers.Timer(1000);
+        timer.Elapsed += (sender, e) =>
+        {
+            currentTime = DateTime.Now;
+            InvokeAsync(StateHasChanged);
+        };
+        timer.Start();
+    }
+
+    private async Task ClockIn()
+    {
+        clockInTime = DateTime.Now;
+        locationError = null;
+        try
+        {
+            var result = await JS.InvokeAsync<LocationResult>("geolocationInterop.getCurrentPosition");
+            latitude = result.latitude;
+            longitude = result.longitude;
+            accuracy = result.accuracy;
+        }
+        catch (JSException jsEx)
+        {
+            locationError = jsEx.Message;
+        }
+        catch (Exception ex)
+        {
+            locationError = ex.Message;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private class LocationResult
+    {
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+        public double accuracy { get; set; }
+    }
+}
+
+<script>
+    window.geolocationInterop = {
+        getCurrentPosition: function () {
+            return new Promise(function (resolve, reject) {
+                if (!navigator.geolocation) {
+                    reject('Geolocation not supported by this browser.');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    resolve({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy
+                    });
+                }, function (err) {
+                    reject(err.message || 'Unable to get location');
+                }, { enableHighAccuracy: true, timeout: 10000 });
+            });
+        }
+    };
+</script>
