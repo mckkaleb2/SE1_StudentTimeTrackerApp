@@ -1,0 +1,45 @@
+<h3>@UserName</h3>
+
+<div class="chat-window">
+    <div class="chat-messages" id="chatMessages">
+        @foreach (var message in messages)
+        {
+            <div class="message">
+                <strong>@message.User:</strong> @message.Text
+            </div>
+        }
+    </div>
+    <input @bind="currentMessage" @bind:event="oninput" placeholder="Type a message..." @onkeydown="HandleKeyDown" />
+    <button @onclick="SendMessage">Send</button>
+</div>
+
+@code {
+    private List<ChatMessage> messages = new List<ChatMessage>();
+    private string? currentMessage;
+
+    [Parameter]
+    public required string UserName { get; set; }
+
+    private void SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(currentMessage))
+        {
+            messages.Add(new ChatMessage { User = UserName, Text = currentMessage });
+            currentMessage = string.Empty;
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SendMessage();
+        }
+    }
+
+    public class ChatMessage
+    {
+        public required string User { get; set; }
+        public required string Text { get; set; }
+    }
+}
