@@ -1,6 +1,8 @@
-﻿using StudentTimeTrackerApp.Models;
+﻿using StudentTimeTrackerApp.Data;
+using StudentTimeTrackerApp.Models;
 using StudentTimeTrackerApp.Models.Entities;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StudentTimeTrackerApp.Entities
 {
@@ -14,6 +16,10 @@ namespace StudentTimeTrackerApp.Entities
         public Prefix Prefix { get; set; }
         public Suffix Suffix { get; set; }
         public bool isAdmin { get; set; } = false;
+
+        public string UserId { get; set; } = string.Empty;
+        [ForeignKey("UserId")]
+        public ApplicationUser User { get; set; }
 
         public ICollection<Course> Courses { get; set; } = new List<Course>();
         public ICollection<Student> Students { get; set; } = new List<Student>();
