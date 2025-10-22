@@ -19,9 +19,8 @@ namespace StudentTimeTrackerApp.Entities
 
         public string UserId { get; set; } = string.Empty;
         [ForeignKey("UserId")]
-        public ApplicationUser User { get; set; }
+        public required ApplicationUser User { get; set; }
 
         public ICollection<Course> Courses { get; set; } = new List<Course>();
-        public ICollection<Student> Students { get; set; } = new List<Student>();
     }
 }
