@@ -11,5 +11,7 @@ namespace StudentTimeTrackerApp.Data
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Instructor> Instructors { get; set; }
+        public DbSet<Timecard> Timecards { get; set; }
+        public DbSet<TimeEntry> TimeEntries { get; set; }
     }
 }
