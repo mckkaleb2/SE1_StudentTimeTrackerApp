@@ -3,6 +3,7 @@
         <div class="card-header bg-primary text-white">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Clock in/out</h5>
+                <span class="badge rounded-pill @(isClockedIn ? "bg-success" : "bg-secondary")">@(isClockedIn ? "Clocked In" : "Clocked Out")</span>
             </div>
         </div>
 
@@ -13,7 +14,7 @@
             </div>
 
             <div class="d-flex gap-2 justify-content-center mb-3">
-                <button class="btn btn-success btn-lg" @onclick="ClockIn" disabled="@isGettingLocation" aria-label="Clock In">
+                <button class="btn btn-success btn-lg" @onclick="ClockIn" disabled="@(isClockedIn || isGettingLocation)" aria-label="Clock In">
                     @if (isGettingLocation)
                     {
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -25,7 +26,7 @@
                     }
                 </button>
 
-                <button class="btn btn-outline-secondary btn-lg" @onclick="ClockOut" aria-label="Clock Out">
+                <button class="btn btn-outline-secondary btn-lg" @onclick="ClockOut" disabled="@(!isClockedIn)" aria-label="Clock Out">
                     Clock Out
                 </button>
             </div>
@@ -75,6 +76,14 @@
                         <div class="mt-2 small text-muted">
                             <div>Clock in time: <strong>@(clockInTime == default ? "-" : clockInTime.ToString("HH:mm:ss"))</strong></div>
                             <div>Clock out time: <strong>@(clockOutTime == default ? "-" : clockOutTime.ToString("HH:mm:ss"))</strong></div>
+                            <div>
+                                Total duration: 
+                                <strong>
+                                    @(clockInTime != default && clockOutTime != default 
+                                        ? (clockOutTime - clockInTime).ToString(@"hh\:mm\:ss") 
+                                        : "-")
+                                </strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -106,6 +115,7 @@
     private DateTime clockInTime;
     private DateTime clockOutTime;
     private bool isGettingLocation = false;
+    private bool isClockedIn = false;
 
     protected override void OnInitialized()
     {
@@ -144,12 +154,14 @@
             isGettingLocation = false;
         }
         await InvokeAsync(StateHasChanged);
+        isClockedIn = true;
     }
 
     private Task ClockOut()
     {
         clockOutTime = DateTime.Now;
         StateHasChanged();
+        isClockedIn = false;
         return Task.CompletedTask;
     }
 
