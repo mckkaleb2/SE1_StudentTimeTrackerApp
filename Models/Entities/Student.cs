@@ -13,8 +13,8 @@ namespace StudentTimeTrackerApp.Entities
         public string ANum { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public Prefix Prefix { get; set; }
-        public Suffix Suffix { get; set; }
+        public Prefix? Prefix { get; set; }
+        public Suffix? Suffix { get; set; }
 
 
         public string UserID { get; set; } = string.Empty;

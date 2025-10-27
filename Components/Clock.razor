@@ -1,3 +1,8 @@
+@using Services
+@using System.Security.Claims
+@inject TimeCardService TimeCardService
+@inject AuthenticationStateProvider AuthStateProvider
+
 <div class="d-flex justify-content-center my-4">
     <div class="card shadow-sm clock-card">
         <div class="card-header bg-primary text-white">
@@ -116,6 +121,7 @@
     private DateTime clockOutTime;
     private bool isGettingLocation = false;
     private bool isClockedIn = false;
+    private int timeEntryId;
 
     protected override void OnInitialized()
     {
@@ -131,7 +137,9 @@
 
     private async Task ClockIn()
     {
+        // Convert to UTC when storing
         clockInTime = DateTime.Now;
+        var utcClockInTime = DateTime.UtcNow;
         locationError = null;
         isGettingLocation = true;
         try
@@ -144,10 +152,12 @@
         catch (JSException jsEx)
         {
             locationError = jsEx.Message;
+            return;
         }
         catch (Exception ex)
         {
             locationError = ex.Message;
+            return;
         }
         finally
         {
@@ -155,6 +165,18 @@
         }
         await InvokeAsync(StateHasChanged);
         isClockedIn = true;
+    
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            locationError = "User is not authenticated.";
+            return;
+        }
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    
+        // Pass UTC time to service
+        timeEntryId = TimeCardService.CreateTimeEntry(userId!, utcClockInTime, latitude!.Value, longitude!.Value);
     }
 
     private Task ClockOut()
@@ -162,6 +184,7 @@
         clockOutTime = DateTime.Now;
         StateHasChanged();
         isClockedIn = false;
+        TimeCardService.CloseTimeEntry(timeEntryId, DateTime.UtcNow);
         return Task.CompletedTask;
     }
 
