@@ -6,8 +6,9 @@
 
 
 <div class="card">
-    <div class="card-header">
-        <h3>Time Entry History</h3>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Time Entry History</h3>
+        <button class="btn btn-primary" @onclick="LoadTimeEntries">Refresh</button>
     </div>
     <div class="card-body">
         @if (timeEntries == null)
@@ -79,6 +80,19 @@
         {
             string? userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             timeEntries = TimeCardService.GetTimeEntriesForStudent(userId!);
+        }
+    }
+
+    private async void LoadTimeEntries()
+    {
+        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity!.IsAuthenticated)
+        {
+            string? userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            timeEntries = TimeCardService.GetTimeEntriesForStudent(userId!);
+            StateHasChanged();
         }
     }
 

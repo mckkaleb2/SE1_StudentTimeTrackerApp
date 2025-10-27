@@ -92,9 +92,19 @@ namespace Services
         /// <returns>List of all time entries for student</returns>
         public List<TimeEntry> GetTimeEntriesForStudent(string userId)
         {
-            return _context.TimeEntries
+            var res = _context.TimeEntries
                 .Where(te => te.Timecard.Student.UserID == userId)
                 .ToList();
+            res.Reverse();
+            return res;
+        }
+
+        public TimeEntry GetLastTimeEntryForStudent(string userId)
+        {
+            return _context.TimeEntries
+                .Where(te => te.Timecard.Student.UserID == userId)
+                .OrderByDescending(te => te.TimeIn)
+                .FirstOrDefault()!;
         }
     }
 }
