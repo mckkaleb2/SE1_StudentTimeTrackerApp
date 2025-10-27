@@ -84,5 +84,17 @@ namespace Services
                 _context.SaveChanges();
             }
         }
+
+        /// <summary>
+        /// Retrieves all time entries for a specific student
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>List of all time entries for student</returns>
+        public List<TimeEntry> GetTimeEntriesForStudent(string userId)
+        {
+            return _context.TimeEntries
+                .Where(te => te.Timecard.Student.UserID == userId)
+                .ToList();
+        }
     }
 }

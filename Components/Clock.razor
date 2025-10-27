@@ -174,7 +174,7 @@
             return;
         }
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    
+
         // Pass UTC time to service
         timeEntryId = TimeCardService.CreateTimeEntry(userId!, utcClockInTime, latitude!.Value, longitude!.Value);
     }
@@ -185,6 +185,7 @@
         StateHasChanged();
         isClockedIn = false;
         TimeCardService.CloseTimeEntry(timeEntryId, DateTime.UtcNow);
+
         return Task.CompletedTask;
     }
 
