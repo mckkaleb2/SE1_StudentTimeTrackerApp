@@ -1,3 +1,8 @@
+@using Services
+@using System.Security.Claims
+@inject TimeCardService TimeCardService
+@inject AuthenticationStateProvider AuthStateProvider
+
 <div class="d-flex justify-content-center my-4">
     <div class="card shadow-sm clock-card">
         <div class="card-header bg-primary text-white">
@@ -9,7 +14,7 @@
 
         <div class="card-body">
             <div class="text-center mb-3">
-                <h2 class="display-6 fw-bold">@currentTime.ToString("HH:mm:ss")</h2>
+                <h2 class="display-6 fw-bold">@currentTime.ToString("h:mm:ss tt")</h2>
                 <small class="text-muted">Local time</small>
             </div>
 
@@ -18,7 +23,6 @@
                     @if (isGettingLocation)
                     {
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            
                     }
                     else
                     {
@@ -116,9 +120,11 @@
     private DateTime clockOutTime;
     private bool isGettingLocation = false;
     private bool isClockedIn = false;
+    private int timeEntryId;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // clock tick
         currentTime = DateTime.Now;
         var timer = new System.Timers.Timer(1000);
         timer.Elapsed += (sender, e) =>
@@ -127,11 +133,56 @@
             InvokeAsync(StateHasChanged);
         };
         timer.Start();
+
+        // load last time entry for logged-in user using the requested method
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated ?? false)
+            {
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    // If your service method name differs, adjust accordingly.
+                    var last = TimeCardService.GetLastTimeEntryForStudent(userId!); // <-- uses requested method
+
+                    if (last != null)
+                    {
+                        // If there's an active entry (no TimeOut) mark clocked in and populate location/display
+                        if (!last.TimeOut.HasValue)
+                        {
+                            isClockedIn = true;
+                            timeEntryId = last.Id;
+                            // ensure TimeIn is treated as UTC from DB and convert for display
+                            clockInTime = DateTime.SpecifyKind(last.TimeIn, DateTimeKind.Utc).ToLocalTime();
+                            latitude = last.Latitude;
+                            longitude = last.Longitude;
+                            accuracy = null; // accuracy not stored on clock in
+                        }
+                        else
+                        {
+                            // populate last clock out/display values
+                            clockInTime = DateTime.SpecifyKind(last.TimeIn, DateTimeKind.Utc).ToLocalTime();
+                            clockOutTime = DateTime.SpecifyKind(last.TimeOut.Value, DateTimeKind.Utc).ToLocalTime();
+                            latitude = last.Latitude;
+                            longitude = last.Longitude;
+                            accuracy = null;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // swallow init errors to avoid breaking the UI
+        }
     }
 
     private async Task ClockIn()
     {
         clockInTime = DateTime.Now;
+        var utcClockInTime = DateTime.UtcNow;
         locationError = null;
         isGettingLocation = true;
         try
@@ -144,10 +195,12 @@
         catch (JSException jsEx)
         {
             locationError = jsEx.Message;
+            return;
         }
         catch (Exception ex)
         {
             locationError = ex.Message;
+            return;
         }
         finally
         {
@@ -155,6 +208,17 @@
         }
         await InvokeAsync(StateHasChanged);
         isClockedIn = true;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            locationError = "User is not authenticated.";
+            return;
+        }
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        timeEntryId = TimeCardService.CreateTimeEntry(userId!, utcClockInTime, latitude!.Value, longitude!.Value);
     }
 
     private Task ClockOut()
@@ -162,6 +226,8 @@
         clockOutTime = DateTime.Now;
         StateHasChanged();
         isClockedIn = false;
+        TimeCardService.CloseTimeEntry(timeEntryId, DateTime.UtcNow);
+
         return Task.CompletedTask;
     }
 

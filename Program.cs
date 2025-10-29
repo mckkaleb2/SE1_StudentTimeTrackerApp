@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Services;
 using StudentTimeTrackerApp.Components;
 using StudentTimeTrackerApp.Components.Account;
 using StudentTimeTrackerApp.Data;
@@ -21,7 +22,8 @@ namespace StudentTimeTrackerApp
             builder.Services.AddScoped<IdentityUserAccessor>();
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
+            builder.Services.AddTransient<TimeCardService>();
+    
             builder.Services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = IdentityConstants.ApplicationScheme;
