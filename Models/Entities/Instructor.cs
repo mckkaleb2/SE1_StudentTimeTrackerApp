@@ -13,8 +13,8 @@ namespace StudentTimeTrackerApp.Entities
         public string ANum { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public Prefix Prefix { get; set; }
-        public Suffix Suffix { get; set; }
+        public Prefix? Prefix { get; set; }
+        public Suffix? Suffix { get; set; }
         public bool isAdmin { get; set; } = false;
 
         public string UserId { get; set; } = string.Empty;
@@ -23,4 +23,4 @@ namespace StudentTimeTrackerApp.Entities
 
         public ICollection<Course> Courses { get; set; } = new List<Course>();
     }
-}
+}
