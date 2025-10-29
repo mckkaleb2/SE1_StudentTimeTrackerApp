@@ -26,23 +26,42 @@ main {
         background: none;
         border-radius: 4px;
         height: 3rem;
-        padding-right: 1rem;
-        padding-left: 1rem;
         display: flex;
         align-items: center;
         line-height: 1rem;
         border: none;
-        margin-right: .5rem;
+        margin-right: 1rem;
+        margin-left: 1rem;
+        
+        
     }
-
+    
+    .buttons ::deep a {
+        padding-right: 1rem;
+        padding-left: 1rem;
+        
+    }
+    
     .top-row ::deep a.active {
         background-color: rgb(37, 6, 71);
         color: white;
+        border-radius: 4px;
+        /* padding: 1rem; */
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        /* padding-right: 1rem;
+        padding-left: 1rem;
+         */
+        line-height: 1rem;
+        border: none;
     }
-
+    
     .top-row ::deep .buttons:hover {
         background-color: rgb(37, 6, 71);
         color: white;
+        padding-left: 0;
+        /* margin-left: 1rem; */
+
     }
 
 
