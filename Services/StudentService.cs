@@ -26,5 +26,15 @@ namespace Services
             _context.Students.Add(student); // Add the student to the context
             _context.SaveChanges(); // Save changes to the database
         }
+
+        public Student GetStudentByUserId(string userId)
+        {
+            return _context.Students.FirstOrDefault(s => s.UserID == userId);
+        }
+
+        public bool userIsStudent(string userId)
+        {
+            return _context.Students.Any(s => s.UserID == userId);
+        }
     }
 }

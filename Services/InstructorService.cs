@@ -27,5 +27,15 @@ namespace Services
             _context.Instructors.Add(instructor); // Add the instructor to the context
             _context.SaveChanges(); // Save changes to the database
         }
+
+        public Instructor GetInstructorByUserId(string userId)
+        {
+            return _context.Instructors.FirstOrDefault(i => i.UserId == userId);
+        }
+
+        public bool UserIsInstructor(string userId)
+        {
+            return _context.Instructors.Any(i => i.UserId == userId);
+        }
     }
 }
