@@ -14,27 +14,37 @@ main {
 
 .top-row {
     background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
+    border-bottom: 1px solid #220562;
     justify-content: flex-end;
     height: 3.5rem;
     display: flex;
     align-items: center;
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
+    .top-row ::deep .buttons {
+        color: #16043f;
+        background: none;
+        border-radius: 4px;
+        height: 3rem;
+        padding-right: 1rem;
+        padding-left: 1rem;
+        display: flex;
+        align-items: center;
+        line-height: 1rem;
+        border: none;
+        margin-right: .5rem;
     }
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
+    .top-row ::deep a.active {
+        background-color: rgb(37, 6, 71);
+        color: white;
     }
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .top-row ::deep .buttons:hover {
+        background-color: rgb(37, 6, 71);
+        color: white;
     }
+
 
 @media (max-width: 640.98px) {
     .top-row {
@@ -74,6 +84,7 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+
 }
 
 #blazor-error-ui {
