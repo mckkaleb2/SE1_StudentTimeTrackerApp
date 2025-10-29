@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using StudentTimeTrackerApp.Data
+@using Services
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
@@ -14,6 +15,7 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject StudentService StudentService
 
 <PageTitle>Register</PageTitle>
 
@@ -41,6 +43,21 @@
                 <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label for="Input.ConfirmPassword">Confirm Password</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName" id="FirstName" class="form-control" placeholder="First Name" />
+                <label for="FirstName">First Name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" id="LastName" class="form-control" placeholder="Last Name" />
+                <label for="LastName">Last Name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.StudentID" id="StudentID" class="form-control" placeholder="Student ID" />
+                <label for="StudentID">Student ID (E-Number)</label>
+                <ValidationMessage For="() => Input.StudentID" class="text-danger" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
@@ -74,11 +91,21 @@
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
         var result = await UserManager.CreateAsync(user, Input.Password);
 
+        if (Input.FirstName is null || Input.LastName is null || Input.StudentID is null)
+        {
+            identityErrors = new List<IdentityError>
+            {
+                new IdentityError { Description = "First Name, Last Name, and Student ID are required." }
+            };
+            return;
+        }
         if (!result.Succeeded)
         {
             identityErrors = result.Errors;
             return;
         }
+
+        StudentService.CreateStudent(Input.FirstName, Input.LastName, Input.StudentID, user.Id, user);
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -141,5 +168,16 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        // Added fields
+        [Required]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        public string LastName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Student ID (E-Number)")]
+        public string StudentID { get; set; } = "";
     }
 }
