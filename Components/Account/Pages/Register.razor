@@ -16,6 +16,7 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject StudentService StudentService
+@inject InstructorService InstructorService
 
 <PageTitle>Register</PageTitle>
 
@@ -29,6 +30,22 @@
             <h2>Create a new account.</h2>
             <hr />
             <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label>I am a...</label>
+                <div class="form-check" style="display: flex; gap: 2rem;">
+                    <InputRadioGroup @bind-Value="Input.Role">
+                        <div>
+                            <InputRadio Value="@("Student")" class="form-check-input" id="roleStudent" />
+                            <label class="form-check-label" for="roleStudent">Student</label>
+                        </div>
+                        <div>
+                            <InputRadio Value="@("Instructor")" class="form-check-input" id="roleInstructor" />
+                            <label class="form-check-label" for="roleInstructor">Instructor</label>
+                        </div>
+                    </InputRadioGroup>
+                    <ValidationMessage For="() => Input.Role" class="text-danger" />
+                </div>
+            </div>
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <label for="Input.Email">Email</label>
@@ -61,13 +78,6 @@
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
     </div>
 </div>
 
@@ -104,8 +114,13 @@
             identityErrors = result.Errors;
             return;
         }
-
-        StudentService.CreateStudent(Input.FirstName, Input.LastName, Input.StudentID, user.Id, user);
+        if (Input.Role == "Student")
+        {
+            StudentService.CreateStudent(Input.FirstName, Input.LastName, Input.StudentID, user.Id, user);
+        } else if (Input.Role == "Instructor")
+        {
+            InstructorService.CreateInstructor(Input.FirstName, Input.LastName, Input.StudentID, user.Id, user);
+        }
 
         Logger.LogInformation("User created a new account with password.");
 
@@ -179,5 +194,9 @@
         [Required]
         [Display(Name = "Student ID (E-Number)")]
         public string StudentID { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Role")]
+        public string Role { get; set; } = "";
     }
 }

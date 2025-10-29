@@ -24,6 +24,7 @@ namespace StudentTimeTrackerApp
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
             builder.Services.AddTransient<TimeCardService>();
             builder.Services.AddTransient<StudentService>();
+            builder.Services.AddTransient<InstructorService>();
     
             builder.Services.AddAuthentication(options =>
                 {

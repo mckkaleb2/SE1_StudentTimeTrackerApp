@@ -1,0 +1,31 @@
+using StudentTimeTrackerApp.Data;
+using StudentTimeTrackerApp.Entities;
+
+
+namespace Services
+{
+    public class InstructorService
+    {
+        private readonly ApplicationDbContext _context; // Add a field for the context
+
+        public InstructorService(ApplicationDbContext context) // Inject the context via constructor
+        {
+            _context = context;
+        }
+
+        public void CreateInstructor(string firstName, string lastName, string aNum, string userId, ApplicationUser user)
+        {
+            var instructor = new Instructor // Create a new Instructor object
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                ANum = aNum,
+                UserId = userId,
+                User = user
+            };
+
+            _context.Instructors.Add(instructor); // Add the instructor to the context
+            _context.SaveChanges(); // Save changes to the database
+        }
+    }
+}
