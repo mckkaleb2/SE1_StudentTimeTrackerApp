@@ -1,0 +1,145 @@
+﻿using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Services;
+using StudentTimeTrackerApp.Components;
+using StudentTimeTrackerApp.Components.Account;
+using StudentTimeTrackerApp.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace StudentTimeTrackerApp
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+        /// <summary>
+        /// Adds services to the container. Effectively supplements the Builder.services pipeline in Program.cs
+        /// </summary>
+        /// <param name="services"></param>
+        public void ConfigureServices(IServiceCollection services)
+        {
+            
+            services.AddRazorPages();
+            //services.AddServerSideBlazor();
+            //services.AddSingleton<WeatherForecastService>();
+            
+
+            // Add services to the container.
+            services.AddRazorComponents()
+                .AddInteractiveServerComponents();
+
+            services.AddCascadingAuthenticationState();
+            services.AddScoped<IdentityUserAccessor>();
+            services.AddScoped<IdentityRedirectManager>();
+            services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+            services.AddTransient<TimeCardService>();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            })
+                .AddIdentityCookies();
+
+            var connectionString = Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString));
+            services.AddDatabaseDeveloperPageExceptionFilter();
+
+            services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddSignInManager()
+                .AddDefaultTokenProviders();
+
+            services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+
+
+        } // END - Configureservices
+
+        /// <summary>
+        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// </summary>
+        /// <param name="app"></param>
+        /// <param name="env"></param>
+        public void Configure(WebApplication app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseMigrationsEndPoint();
+
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+
+
+            app.UseHttpsRedirection();
+
+            // serve static files (wwwroot)
+            app.UseStaticFiles();
+
+            // routing, auth and endpoints
+            app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+
+
+            // Preserve the existing antiforgery call if you have an extension for it
+            try
+            {
+                app.UseAntiforgery();
+            }
+            catch
+            {
+                // If that extension is not available in this hosting model, remove or replace it.
+            }
+
+            // swap out IApplicationBuilder for WebApplication to facilitate the following:
+            app.MapStaticAssets();
+            app.MapRazorComponents<App>()
+                .AddInteractiveServerRenderMode();
+
+            // Add additional endpoints required by the Identity /Account Razor components.
+            app.MapAdditionalIdentityEndpoints();
+
+
+
+            
+            // Register endpoints directly on the app (top-level route registrations)
+            /* Replaces ` app.UseEndpoints(endpoints => {...}); ` pattern seen in thesample code
+             */
+            app.MapBlazorHub();
+            app.MapFallbackToPage("/Error");
+            app.MapHub<BlazorChatSampleHub>(BlazorChatSampleHub.HubUrl);
+            
+            //app.UseEndpoints(endpoints =>
+            //{
+            //    endpoints.MapBlazorHub();
+            //    endpoints.MapFallbackToPage("/_Host");
+            //    endpoints.MapHub<BlazorChatSampleHub>(BlazorChatSampleHub.HubUrl);
+            //});
+
+            //app.Run();
+
+        } // END - Configure
+
+
+
+
+    }
+}
