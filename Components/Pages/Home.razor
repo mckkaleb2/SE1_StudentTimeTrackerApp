@@ -1,35 +1,32 @@
 ﻿@page "/"
-
-@using Services
-@using Models
-
-@inject StudentService StudentService
-@inject InstructorService InstructorService
-@inject AuthenticationStateProvider AuthStateProvider
+@{int num = 1;}
 
 <PageTitle>Home</PageTitle>
-<h1>Welcome to the Student Time Tracker App</h1>
 
-@if (!isRegistered)
-{
-    <h3>Please log in or register to continue</h3>
-}
-else
-{
-    <h3>You are registered!</h3>
-}
+<h1>Home</h1>
 
-@code {
-    private bool isRegistered = false;
+<AuthorizeView>
+    <Authorized>
+        <div class="alerts"> 
+            You have @num new Message(s)!
+        </div>
 
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        <div class="timeclock">
+            <Clock></Clock>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="login">
+            Please Login or Register:
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
-        if (user.Identity.IsAuthenticated)
-        {
-            isRegistered = true;
-        }
+<style>
+    .alerts{
+        border: solid;
+        text-align: center;
     }
-}
+</style>
+
+
