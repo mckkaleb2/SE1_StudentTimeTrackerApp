@@ -27,12 +27,12 @@ namespace Services
             _context.SaveChanges(); // Save changes to the database
         }
 
-        public Student GetStudentByUserId(string userId)
+        public Student? GetStudentByUserId(string userId)
         {
             return _context.Students.FirstOrDefault(s => s.UserID == userId);
         }
 
-        public bool userIsStudent(string userId)
+        public bool UserIsStudent(string userId)
         {
             return _context.Students.Any(s => s.UserID == userId);
         }

@@ -28,7 +28,7 @@ namespace Services
             _context.SaveChanges(); // Save changes to the database
         }
 
-        public Instructor GetInstructorByUserId(string userId)
+        public Instructor? GetInstructorByUserId(string userId)
         {
             return _context.Instructors.FirstOrDefault(i => i.UserId == userId);
         }
