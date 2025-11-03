@@ -18,7 +18,7 @@
                     </NavLink>
                 </div>
                 <div class="buttons">
-                    <form action="Account/Logout" method="post">
+                    <form class="logout" action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
