@@ -1,7 +1,7 @@
 using StudentTimeTrackerApp.Data; 
 using StudentTimeTrackerApp.Entities; 
 
-namespace Services
+namespace StudentTimeTrackerApp.Services
 {
     public class StudentService
     {

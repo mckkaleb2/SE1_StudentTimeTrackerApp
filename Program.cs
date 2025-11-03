@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Services;
+using StudentTimeTrackerApp.Services;
 using StudentTimeTrackerApp.Components;
 using StudentTimeTrackerApp.Components.Account;
 using StudentTimeTrackerApp.Data;
