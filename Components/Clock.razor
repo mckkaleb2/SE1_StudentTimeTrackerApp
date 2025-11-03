@@ -50,7 +50,11 @@
                             {
                                 <div>Lat: @latitude.Value.ToString("0.000000")</div>
                                 <div>Lng: @longitude.Value.ToString("0.000000")</div>
-                                <div>Accuracy: @accuracy m</div>
+                                if (@accuracy != null){
+                                    <div>Accuracy: @accuracy m</div>
+                                } else {
+                                    <div>Accuracy: 0 m</div>
+                                }
                                 <div class="mt-1">
                                     <a class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer"
                                        href=@GetMapsUrl(latitude.Value, longitude.Value)>Open in Maps</a>
