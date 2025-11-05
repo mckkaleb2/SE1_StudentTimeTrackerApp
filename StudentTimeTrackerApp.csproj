@@ -7,9 +7,15 @@
     <UserSecretsId>aspnet-StudentTimeTrackerApp-c8a11299-cf52-4ff0-b311-b439c57b1157</UserSecretsId>
   </PropertyGroup>
 
+  <!--<ItemGroup>
+    <Compile Include="BlazorChatSampleHub.cs.OLD" />
+    <Compile Include="Startup.cs.OLD" />
+  </ItemGroup>-->
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
