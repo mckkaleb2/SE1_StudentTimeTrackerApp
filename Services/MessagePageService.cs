@@ -1,0 +1,187 @@
+﻿using Microsoft.EntityFrameworkCore;
+using StudentTimeTrackerApp.Data;
+using StudentTimeTrackerApp.Entities;
+using StudentTimeTrackerApp.Models.Entities;
+using StudentTimeTrackerApp.Models;
+
+namespace StudentTimeTrackerApp.Services
+{
+
+    //NOTE: Retrieval methods may need to be async depending on how they are used in the future.
+
+    /// <summary>
+    /// The purpose of this service is to handle user and message operations for the message page
+    /// </summary>
+    public class MessagePageService
+    {
+        private readonly ApplicationDbContext _context; // Add a field for the context
+
+        public MessagePageService(ApplicationDbContext context) // Inject the context via constructor
+        {
+            _context = context;
+        }
+
+        /// <summary>
+        /// Get all of the courses associated with a user, either as an instructor or as a student
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public ICollection<Course>? GetCoursesByUserId(string userId)
+        {
+            // get the courses that are taught by the user, if any
+            var taughtCourses = _context.Courses
+                .Where(c => c.Instructors.Any(i => i.UserId == userId))
+                .ToList();
+
+            // get the courses that are enrolled in by the user, if any
+            var enrolledCourses = _context.Courses
+                .Where(c => c.Students.Any(s => s.UserID == userId))
+                .ToList();
+
+            // create a new list that combines both lists without duplicates
+            var allCourses = taughtCourses.Union(enrolledCourses).ToList();
+
+            return allCourses;
+        }
+
+        /// <summary>
+        /// Retrieves a collection of students enrolled in the specified course.
+        /// </summary>
+        /// <param name="courseId">The unique identifier of the course whose students are to be retrieved.</param>
+        /// <returns>A collection of <see cref="Student"/> objects representing the students enrolled in the course. Returns <see
+        /// langword="null"/> if the course does not exist or has no students.</returns>
+        public ICollection<UserDTO>? GetStudentDTOsByCourseId(int courseId)
+        {
+            var students = _context.Courses
+                .Where(c => c.Id == courseId)
+                .SelectMany(c => c.Students)
+                .Include(s => s.User)
+                .ToList();
+
+            var studentDtos = students.Select(s => new UserDTO(
+                s.UserID,
+                s.FirstName,
+                s.LastName,
+                //s.Prefix != null ? s.Prefix.ToString() : string.Empty,
+                //s.Suffix != null ? s.Suffix.ToString() : string.Empty,
+                s.User.Email = ""
+            )).ToList();
+            return studentDtos;
+        }
+
+        public ICollection<UserDTO>? GetInstructorDTOsByCourseId(int courseId)
+        {
+            var instructors = _context.Courses
+                .Where(c => c.Id == courseId)
+                .SelectMany(c => c.Instructors)
+                .Include(i => i.User)
+                .ToList();
+
+            var instructorDtos = instructors
+                .Select(i => new UserDTO(
+                                i.UserId,
+                                i.FirstName,
+                                i.LastName,
+                                //i.Prefix != null ? i.Prefix.ToString() : string.Empty,
+                                //i.Suffix != null ? i.Suffix.ToString() : string.Empty,
+                                i.User.Email = ""
+                ))
+                .ToList();
+            return instructorDtos;
+        }
+
+        /// <summary>
+        /// [TODO : make sure that instructors show up at the top of this list]
+        /// Attain a list of all users (students and instructors) associated with a course
+        /// 
+        /// </summary>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public IList<UserDTO>? GetUsersByCourseId(int courseId)
+        {
+            var instructorDtos = GetInstructorDTOsByCourseId(courseId);
+
+            var studentDtos = GetStudentDTOsByCourseId(courseId);
+
+            if (instructorDtos == null || studentDtos == null)
+            {
+                Console.WriteLine("ONE OF THE FOLLOWING IS NULL:");
+                Console.WriteLine(instructorDtos);
+                Console.WriteLine(studentDtos);
+            }
+            var allUsers = instructorDtos.Union(studentDtos).ToList();
+
+            // TODO: Sort the list so that instructors are at the top
+            // TODO: Cover what happens if one of these is null
+            return allUsers;
+        }
+
+
+
+        //-----------------
+
+        /// <summary>
+        /// Retrieves messages exchanged between two users within a specific course. If the second User is null, or string.Empty, then it should be from a group chat
+        /// </summary>
+        /// <param name="userId1"></param>
+        /// <param name="userId2"></param>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public ICollection<Message> GetMessagesBetweenUsersInCourse(string userId1, string? userId2, int courseId)
+        {
+            if (string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            {
+                userId2 = string.Empty;
+            }
+
+
+            var messages = _context.Set<Message>()
+                .Where(m => m.CourseId == courseId &&
+                            ((m.Sender == userId1 && m.Recipient == userId2) ||
+                             (m.Sender == userId2 && m.Recipient == userId1)))
+                .OrderBy(m => m.Timestamp)
+                .ToList();
+            return messages;
+        }
+
+        // NOTE: Skipping update functions for messages, as they are generally not editable once sent.
+        public void AddMessageToDatabase(string senderId, string? recipientId, int courseId, string body)
+        {
+
+            var message = new Message
+            {
+                Sender = senderId,
+                Recipient = recipientId ?? string.Empty,
+                CourseId = courseId,
+                Body = body,
+                Timestamp = DateTime.UtcNow
+            };
+            _context.Set<Message>().Add(message);
+            _context.SaveChanges();
+        }
+
+        public void DeleteMessage(int messageId)
+        {
+            var message = _context.Set<Message>().FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                _context.Set<Message>().Remove(message);
+                _context.SaveChanges();
+            }
+        }
+
+
+        // Get List of Enrolled courses for Student
+
+
+        // Get list of users associated with a course, instructors first, then students
+
+
+        // Get message history between two users, also using the CourseID
+
+
+        // to message, you need 2x userIds (unless if sending to a group chat), and a CourseId, as well as the body
+
+
+    }
+}
