@@ -45,6 +45,34 @@ namespace StudentTimeTrackerApp.Services
         }
 
         /// <summary>
+        /// Asynchronously retrieves a collection of courses associated with a specific user.
+        /// </summary>
+        /// <remarks>This method combines courses where the user is an instructor and courses where the
+        /// user is a student,  ensuring no duplicates in the resulting collection.</remarks>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a collection of courses  that
+        /// the user is either teaching or enrolled in. If the user is not associated with any courses,  the collection
+        /// will be empty.</returns>
+        public async Task<ICollection<Course>> GetCoursesByUserIdAsync(string userId)
+        {
+            // get the courses that are taught by the user, if any
+            var taughtCourses = await _context.Courses
+                .Where(c => c.Instructors.Any(i => i.UserId == userId))
+                .ToListAsync();
+
+            // get the courses that are enrolled in by the user, if any
+            var enrolledCourses = await _context.Courses
+                .Where(c => c.Students.Any(s => s.UserID == userId))
+                .ToListAsync();
+
+            // create a new list that combines both lists without duplicates
+            var allCourses = taughtCourses.Union(enrolledCourses).ToList();
+
+            return allCourses;
+        }
+
+
+
+        /// <summary>
         /// Retrieves a collection of students enrolled in the specified course.
         /// </summary>
         /// <param name="courseId">The unique identifier of the course whose students are to be retrieved.</param>
@@ -69,6 +97,32 @@ namespace StudentTimeTrackerApp.Services
             return studentDtos;
         }
 
+        /// <summary>
+        /// Asynchronously retrieves a collection of students enrolled in the specified course.
+        /// </summary>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public async Task<ICollection<UserDTO>?> GetStudentDTOsByCourseIdAsync(int courseId)
+        {
+            var studentDtos = await _context.Courses
+                .Where(c => c.Id == courseId)
+                .SelectMany(c => c.Students)
+                .Include(s => s.User)
+                    .Select(s => new UserDTO(
+                        s.UserID,
+                        s.FirstName,
+                        s.LastName,
+                        //s.Prefix != null ? s.Prefix.ToString() : string.Empty,
+                        //s.Suffix != null ? s.Suffix.ToString() : string.Empty,
+                        s.User.Email ?? ""
+                    ))
+                .ToListAsync();
+
+            return studentDtos;
+        }
+
+
+
         public ICollection<UserDTO>? GetInstructorDTOsByCourseId(int courseId)
         {
             var instructors = _context.Courses
@@ -91,6 +145,32 @@ namespace StudentTimeTrackerApp.Services
         }
 
         /// <summary>
+        /// async version of GetInstructorDTOsByCourseId
+        /// </summary>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public async Task<ICollection<UserDTO>?> GetInstructorDTOsByCourseIdAsync(int courseId)
+        {
+            var instructorDtos = await _context.Courses
+                .Where(c => c.Id == courseId)
+                .SelectMany(c => c.Instructors)
+                .Include(i => i.User)
+                .Select(i => new UserDTO(
+                                i.UserId,
+                                i.FirstName,
+                                i.LastName,
+                                //i.Prefix != null ? i.Prefix.ToString() : string.Empty,
+                                //i.Suffix != null ? i.Suffix.ToString() : string.Empty,
+                                i.User.Email ?? ""
+                ))
+                .ToListAsync();
+
+            return instructorDtos;
+        }
+
+
+
+        /// <summary>
         /// [TODO : make sure that instructors show up at the top of this list]
         /// Attain a list of all users (students and instructors) associated with a course
         /// 
@@ -110,6 +190,38 @@ namespace StudentTimeTrackerApp.Services
                 Console.WriteLine(studentDtos);
             }
             var allUsers = instructorDtos.Union(studentDtos).ToList();
+
+            // TODO: Sort the list so that instructors are at the top
+            // TODO: Cover what happens if one of these is null
+            return allUsers;
+        }
+
+
+
+
+        /// <summary>
+        /// async version of GetUsersByCourseId
+        /// </summary>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public async Task<IList<UserDTO>?> GetUsersByCourseIdAsync(int courseId)
+        {
+            var instructorDtos = GetInstructorDTOsByCourseIdAsync(courseId);
+
+            var studentDtos = GetStudentDTOsByCourseIdAsync(courseId);
+
+            await Task.WhenAll(instructorDtos, studentDtos);
+
+            if (instructorDtos.Result == null || studentDtos.Result == null)
+            {
+                Console.WriteLine("ONE OF THE FOLLOWING IS NULL:");
+                Console.WriteLine(instructorDtos);
+                Console.WriteLine(studentDtos);
+            }
+
+            var allUsers = instructorDtos.Result.Union(studentDtos.Result).ToList(); 
+            //var result = await GetUnion(instructorDtos, studentDtos);
+
 
             // TODO: Sort the list so that instructors are at the top
             // TODO: Cover what happens if one of these is null
@@ -144,6 +256,34 @@ namespace StudentTimeTrackerApp.Services
             return messages;
         }
 
+        /// <summary>
+        /// async version of GetMessagesBetweenUsersInCourse
+        /// </summary>
+        /// <param name="userId1"></param>
+        /// <param name="userId2"></param>
+        /// <param name="courseId"></param>
+        /// <returns></returns>
+        public async Task<ICollection<Message>> GetMessagesBetweenUsersInCourseAsync(string userId1, string? userId2, int courseId)
+        {
+            if (string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            {
+                userId2 = string.Empty;
+            }
+
+
+            var messages =  await _context.Set<Message>()
+                .ToAsyncEnumerable()
+
+                .Where(m => m.CourseId == courseId &&
+                            ((m.Sender == userId1 && m.Recipient == userId2) ||
+                             (m.Sender == userId2 && m.Recipient == userId1)))
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+            return messages;
+        }
+
+
+
         // NOTE: Skipping update functions for messages, as they are generally not editable once sent.
         public void AddMessageToDatabase(string senderId, string? recipientId, int courseId, string body)
         {
@@ -160,6 +300,31 @@ namespace StudentTimeTrackerApp.Services
             _context.SaveChanges();
         }
 
+        /// <summary>
+        /// async version of AddMessageToDatabase
+        /// </summary>
+        /// <param name="senderId"></param>
+        /// <param name="recipientId"></param>
+        /// <param name="courseId"></param>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        public async Task AddMessageToDatabaseAsync(string senderId, string? recipientId, int courseId, string body)
+        {
+
+            var message = new Message
+            {
+                Sender = senderId,
+                Recipient = recipientId ?? string.Empty,
+                CourseId = courseId,
+                Body = body,
+                Timestamp = DateTime.UtcNow
+            };
+            await _context.Set<Message>().AddAsync(message);
+            await _context.SaveChangesAsync();
+        }
+
+
+
         public void DeleteMessage(int messageId)
         {
             var message = _context.Set<Message>().FirstOrDefault(m => m.Id == messageId);
@@ -170,6 +335,21 @@ namespace StudentTimeTrackerApp.Services
             }
         }
 
+
+        /// <summary>
+        /// async version of DeleteMessage
+        /// </summary>
+        /// <param name="messageId"></param>
+        /// <returns></returns>
+        public async Task DeleteMessageAsync(int messageId)
+        {
+            var message = _context.Set<Message>().FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                _context.Set<Message>().Remove(message);
+                await _context.SaveChangesAsync();
+            }
+        }
 
         // Get List of Enrolled courses for Student
 
