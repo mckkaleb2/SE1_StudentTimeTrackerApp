@@ -3,7 +3,7 @@ using System.Linq;
 using StudentTimeTrackerApp.Models.Entities;
 using StudentTimeTrackerApp.Data;
 
-namespace Services
+namespace StudentTimeTrackerApp.Services
 {
     /// <summary>
     /// Service for managing time cards and time entries for students

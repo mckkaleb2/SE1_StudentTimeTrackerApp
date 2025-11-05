@@ -1,10 +1,32 @@
 ﻿@page "/"
+@{int num = 1;}
 
 <PageTitle>Home</PageTitle>
 
-<h1>Student Tracker App Home Page</h1>
+<h1>Home</h1>
 
-<p>Pages:</p>
-<p>Home Page</p>
-<p>Timesheet Page</p>
-<p>Messaging Page</p>
+<AuthorizeView>
+    <Authorized>
+        <div class="alerts"> 
+            You have @num new Message(s)!
+        </div>
+
+        <div class="timeclock">
+            <Clock></Clock>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="login">
+            Please Login or Register:
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+<style>
+    .alerts{
+        border: solid;
+        text-align: center;
+    }
+</style>
+
+
