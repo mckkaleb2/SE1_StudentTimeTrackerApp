@@ -1,5 +1,8 @@
 ﻿@page "/"
-@{int num = 1;}
+@using System.Security.Claims   
+@inject StudentTimeTrackerApp.Services.StudentService StudentService
+@inject StudentTimeTrackerApp.Services.InstructorService InstructorService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Home</PageTitle>
 
@@ -7,13 +10,14 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="alerts"> 
-            You have @num new Message(s)!
-        </div>
-
-        <div class="timeclock">
-            <Clock></Clock>
-        </div>
+        @if (IsStudent) {
+            <div class="timeclock">
+                <Clock></Clock>
+            </div>
+        }
+        @if (IsInstructor) {
+            <h1>Hi Instructor</h1>
+        }
     </Authorized>
     <NotAuthorized>
         <div class="login">
@@ -29,4 +33,20 @@
     }
 </style>
 
+@code {
+    private bool IsStudent = false;
+    private bool IsInstructor = false;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            IsStudent = StudentService.UserIsStudent(userId!);
+            IsInstructor = InstructorService.UserIsInstructor(userId!);
+        }
+    }
+}
