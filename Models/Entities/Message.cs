@@ -17,7 +17,7 @@ namespace StudentTimeTrackerApp.Models.Entities
         /// </summary>
         public string Recipient { get; set; } = string.Empty;
         // Foreign key to associate message with a course
-        public int CourseId { get; set; }
+        public int CourseId { get; set; } = 0;
 
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
