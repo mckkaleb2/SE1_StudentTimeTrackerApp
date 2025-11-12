@@ -3,6 +3,7 @@
 @inject StudentTimeTrackerApp.Services.StudentService StudentService
 @inject StudentTimeTrackerApp.Services.InstructorService InstructorService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject StudentTimeTrackerApp.Services.CourseService CourseService
 
 <PageTitle>Home</PageTitle>
 
@@ -12,11 +13,52 @@
     <Authorized>
         @if (IsStudent) {
             <div class="timeclock">
+                @if(isWorking == false)
+                {
+                    @errorMessage
+                }
+                <br />
+                <br />
+                <br />
                 <Clock></Clock>
+                <br />
+                <br />
+                <br />
+                <h1>Join a Course!</h1>
+                <form>
+                    <label>Course Code:</label>
+                    <input placeholder="Ex. CSCI, HIST, etc." type="text" id="CouseCode" @bind-value="CourseCode" />
+                    <label>Course Number:</label>
+                    <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum" />
+                    <label>Section Number:</label>
+                    <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum" />
+                </form>
+                <button class="btn btn-success" @onclick="() => CallFindCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
+                }
+
             </div>
         }
         @if (IsInstructor) {
+            @if (isWorking == false)
+            {
+                <h1>An error occurred <br />Please try again.</h1>
+            }
+            <br />
+            <br />
+            <br />
+            
             <h1>Hi Instructor</h1>
+
+           <h1>Create a Course!</h1>
+           <form>
+               <label>Course Code:</label>
+               <input placeholder="Ex. CSCI, HIST, etc."type="text" id="CouseCode" @bind-value="CourseCode" />
+               <label>Course Number:</label>
+               <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum"/>
+               <label>Section Number:</label>
+               <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum"/>
+           </form>
+           <button class="btn btn-success" @onclick="() => CallCreateCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
         }
     </Authorized>
     <NotAuthorized>
@@ -36,17 +78,38 @@
 @code {
     private bool IsStudent = false;
     private bool IsInstructor = false;
+    private string newUserId = string.Empty;
+    bool isWorking = true;
+    string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
+
         if (!string.IsNullOrEmpty(userId))
         {
             IsStudent = StudentService.UserIsStudent(userId!);
             IsInstructor = InstructorService.UserIsInstructor(userId!);
+            newUserId = userId;
         }
+    }
+
+    // Create a Course in Instructor View
+    public string CourseCode { get; set; } = string.Empty;
+    public int CourseNum { get; set; }
+    public int SectionNum { get; set; }
+
+
+
+    private void CallCreateCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
+    {
+        errorMessage = CourseService.CreateCourse(newUserId, courseCode, courseNum, sectionNum);
+    }
+
+    private void CallFindCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
+    {
+        errorMessage = CourseService.FindCourse(newUserId, courseCode, courseNum, sectionNum);
     }
 }
