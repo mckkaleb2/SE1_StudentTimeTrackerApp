@@ -16,15 +16,14 @@ namespace StudentTimeTrackerApp.Services
 
         public string CreateCourse(string userId, string courseCode, int courseNum, int sectionNum)
         {
-            bool isWorking = true;
             string errorMessage = string.Empty;
             var instructor = _context.Instructors
                 .FirstOrDefault(i => i.UserId == userId);
 
             if (instructor == null) {
-                isWorking = false;
                 errorMessage = "Instructor was not found. Please try again.";
                 // throw new InvalidOperationException("Instructor not found.");
+                return errorMessage;
             }
 
             var course = new Course
@@ -45,15 +44,14 @@ namespace StudentTimeTrackerApp.Services
 
         public string FindCourse(string userId, string courseCode, int courseNum, int sectionNum)
         {
-            bool isWorking = true;
             string errorMessage = string.Empty;
             var student = _context.Students
                 .FirstOrDefault(s => s.UserID == userId);
 
             if (student == null) {
-                isWorking = false;
                 errorMessage = "No student found. Please try again.";
                 // throw new InvalidOperationException("No student found.");
+                return errorMessage;
             }
 
 
@@ -65,9 +63,9 @@ namespace StudentTimeTrackerApp.Services
 
             if (match == null)
             {
-                isWorking = false;
                 errorMessage = "No course was found. Please try again.";
                 // throw new InvalidOperationException("No Course was found.");
+                return errorMessage;
             }
 
             student.Courses.Add(match);

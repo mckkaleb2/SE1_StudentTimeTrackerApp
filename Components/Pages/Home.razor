@@ -41,7 +41,7 @@
         @if (IsInstructor) {
             @if (isWorking == false)
             {
-                <h1>An error occurred <br />Please try again.</h1>
+                <h1>@errorMessage</h1>
             }
             <br />
             <br />
@@ -106,10 +106,18 @@
     private void CallCreateCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
     {
         errorMessage = CourseService.CreateCourse(newUserId, courseCode, courseNum, sectionNum);
+        if (errorMessage != string.Empty)
+        {
+            isWorking = false;
+        }
     }
 
     private void CallFindCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
     {
         errorMessage = CourseService.FindCourse(newUserId, courseCode, courseNum, sectionNum);
+        if (errorMessage != string.Empty)
+        {
+            isWorking = false;
+        }
     }
 }
