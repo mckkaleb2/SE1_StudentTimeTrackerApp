@@ -11,5 +11,8 @@ namespace StudentTimeTrackerApp.Models.Entities
         public string Sender { get; set; } = string.Empty;
         // This will be the UserId of the receiver grabbed with a GET through the connection likely using the Course class.
         public string Recipient { get; set; } = string.Empty;
+
+        public string CourseID { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
     }
 }
