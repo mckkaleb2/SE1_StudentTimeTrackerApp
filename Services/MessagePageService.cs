@@ -247,7 +247,7 @@ namespace StudentTimeTrackerApp.Services
             }
 
 
-            var messages = _context.Set<Message>()
+            var messages = _context.Messages
                 .Where(m => m.CourseId == courseId &&
                             ((m.Sender == userId1 && m.Recipient == userId2) ||
                              (m.Sender == userId2 && m.Recipient == userId1)))
@@ -271,9 +271,8 @@ namespace StudentTimeTrackerApp.Services
             }
 
 
-            var messages =  await _context.Set<Message>()
-                .ToAsyncEnumerable()
-
+            var messages =  await _context.Messages
+                //.ToAsyncEnumerable()
                 .Where(m => m.CourseId == courseId &&
                             ((m.Sender == userId1 && m.Recipient == userId2) ||
                              (m.Sender == userId2 && m.Recipient == userId1)))
@@ -296,7 +295,7 @@ namespace StudentTimeTrackerApp.Services
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            _context.Set<Message>().Add(message);
+            _context.Messages.Add(message);
             _context.SaveChanges();
         }
 
@@ -319,7 +318,7 @@ namespace StudentTimeTrackerApp.Services
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            await _context.Set<Message>().AddAsync(message);
+            await _context.Messages.AddAsync(message);
             await _context.SaveChangesAsync();
         }
 
@@ -327,10 +326,10 @@ namespace StudentTimeTrackerApp.Services
 
         public void DeleteMessage(int messageId)
         {
-            var message = _context.Set<Message>().FirstOrDefault(m => m.Id == messageId);
+            var message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
             if (message != null)
             {
-                _context.Set<Message>().Remove(message);
+                _context.Messages.Remove(message);
                 _context.SaveChanges();
             }
         }
@@ -343,10 +342,10 @@ namespace StudentTimeTrackerApp.Services
         /// <returns></returns>
         public async Task DeleteMessageAsync(int messageId)
         {
-            var message = _context.Set<Message>().FirstOrDefault(m => m.Id == messageId);
+            var message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
             if (message != null)
             {
-                _context.Set<Message>().Remove(message);
+                _context.Messages.Remove(message);
                 await _context.SaveChangesAsync();
             }
         }
