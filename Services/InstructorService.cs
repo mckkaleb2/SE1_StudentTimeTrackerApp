@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using StudentTimeTrackerApp.Data;
 using StudentTimeTrackerApp.Entities;
 
@@ -31,6 +32,13 @@ namespace StudentTimeTrackerApp.Services
         public Instructor? GetInstructorByUserId(string userId)
         {
             return _context.Instructors.FirstOrDefault(i => i.UserId == userId);
+        }
+
+        public async Task<Instructor?> GetInstructorByUserIdAsync(string userId)
+        {
+            return await _context.Instructors
+                .Where(s => s.UserId == userId)
+                .FirstOrDefaultAsync();
         }
 
         public bool UserIsInstructor(string userId)
