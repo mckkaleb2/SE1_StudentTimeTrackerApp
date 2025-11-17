@@ -4,6 +4,11 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using StudentTimeTrackerApp.Hubs
 @inject NavigationManager navigationManager
+@using StudentTimeTrackerApp.Services
+@inject MessagePageService messagePageManager
+@using StudentTimeTrackerApp.Entities;
+@using StudentTimeTrackerApp.Models.Entities;
+@using StudentTimeTrackerApp.Models;
 
 @{
     /// Primarily Sourced from https://www.c-sharpcorner.com/article/building-a-real-time-chat-application-with-signalr-in-blazor-net-9/
@@ -68,6 +73,28 @@ else
 
     // display messages
     <div id="scrollbox">
+
+        @foreach (var item in _ArchiveMessages)
+        {
+            @if (item.IsNotice)
+            {
+                <div class="alert alert-info">@item.Body</div>
+            }
+            else
+            {
+                <div class="@item.CSS">
+                    <div class="user">(A) From: @item.Username</div>
+                    @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
+                    {
+                        <div class="user">To: @item.RecieverUsername</div>
+                    }
+                    <div class="msg">@item.Body</div>
+                </div>
+            }
+        }
+
+
+
         @foreach (var item in _Messages)
         {
             @if (item.IsNotice)
@@ -86,6 +113,8 @@ else
                 </div>
             }
         }
+
+
         <hr />
         <div id="sentto">
             <label for="recipientUsername">Send message to:</label>
@@ -112,14 +141,16 @@ else
         /// <summary>
         /// Create a temporary local class for messages
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="username">target user</param>
         /// <param name="body"></param>
         /// <param name="mine"></param>
-        public midMessage(string username, string body, bool mine)
+        /// <param name="courseId"></param>
+        public midMessage(string username, string body, bool mine, int courseId)
         {
             Username = username;
             Body = body;
             Mine = mine;
+            CourseId = courseId;
         }
         /// <summary>
         /// Sender
@@ -128,7 +159,10 @@ else
         /// <summary>
         /// Recipient
         /// </summary>
-        public string RecieverUsername { get; set; }
+        public string? RecieverUsername { get; set; } = string.Empty;
+
+        public int CourseId { get; set; }
+
         /// <summary>
         /// Body
         /// </summary>
@@ -141,8 +175,14 @@ else
     }
 
 
+    [Parameter]
+    public required string User { get; set; }
 
+    [Parameter]
+    public string? Recipient { get; set; } = string.Empty;
 
+    [Parameter]
+    public required int CourseId { get; set; }
 
 
     // flag to indicate chat status
@@ -151,6 +191,7 @@ else
     // name of user that will be chatting
     private string? _UserName;
 
+    private int _CourseId;
 
     // on-screen message
     private string _message;
@@ -164,6 +205,9 @@ else
     // list to hold messages in chat
     private List<midMessage> _Messages = new();
 
+    private List<midMessage> _ArchiveMessages = new();
+
+
     // list of Users in chat
     private List<string> _connectedUsers = new List<string>(); //NOTE: it might be worth checking the Type of this list later
 
@@ -176,8 +220,76 @@ else
 
     // }
 
+    /// <summary>
+    /// Implement optional parameters
+    /// 
+    /// https://www.c-sharpcorner.com/article/parameters-in-blazor-server-deep-dive/
+    /// </summary>
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(Recipient))
+        {
+            _recipientUsername = Recipient.Trim();
+
+        }
+        // if (!string.IsNullOrWhiteSpace(User))
+        // {
+        //     _UserName = User?.Trim();
+        // }
+        // if (_CourseId == null)
+        // {
+        //     _CourseId = CourseId;
+        // }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // alternatively: create a method that Messaging will call when navigating to other users
+        await DisconnectAsync();
+        if (!string.IsNullOrWhiteSpace(Recipient))
+        {
+            _recipientUsername = Recipient.Trim();
+
+        }
+        if (!string.IsNullOrWhiteSpace(User))
+        {
+            _UserName = User?.Trim();
+        }
+        if (_CourseId == null)
+        {
+            _CourseId = CourseId;
+        }
+        await Chat();
+
+        await LoadArchivedMessages();
+    }
+
+    private async Task LoadArchivedMessages()
+    {
+        ICollection<Message> messages = await messagePageManager.GetMessagesBetweenUsersInCourseAsync(_UserName, _recipientUsername, _CourseId);
+
+        foreach(Message m in messages)
+        {
+            bool isMine = m.Sender.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
+            midMessage formattedMessage = new midMessage(m.Sender, m.Body, isMine, m.CourseId);
+            _ArchiveMessages.Add(formattedMessage);
+        }
+        await InvokeAsync(StateHasChanged);
+
+    }
+
+
+
+
     private async Task Chat()
     {
+        // initialize the private fields from the parameters
+        _UserName = User?.Trim();
+        _recipientUsername = Recipient?.Trim();
+        _CourseId = CourseId;
+
+
         if (string.IsNullOrWhiteSpace(_UserName))
         {
             _message = "Please enter a name";
@@ -185,53 +297,53 @@ else
         }
 
         try {
-        //await OnInitializedAsync();
+            //await OnInitializedAsync();
 
-        // check username is valid
+            // check username is valid
 
             // Start chatting and force refresh UI, ref: https://github.com/dotnet/aspnetcore/issues/22159
-        _isChatting = true;
-        await Task.Delay(1);
+            _isChatting = true;
+            await Task.Delay(1);
 
-        // remove old messages if any
-        _Messages.Clear();
+            // remove old messages if any
+            _Messages.Clear();
 
-        // Create the chat client
-        string baseUrl = navigationManager.BaseUri;
-        _hubUrl = baseUrl.TrimEnd('/') + ChatHub.HubUrl;
+            // Create the chat client
+            string baseUrl = navigationManager.BaseUri;
+            _hubUrl = baseUrl.TrimEnd('/') + ChatHub.HubUrl;
 
 
-        // Create the connection
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{_hubUrl}?username={_UserName}")
-            //.WithUrl(_hubUrl) //navigationManager.ToAbsoluteUri("/chathub"))
-            .WithAutomaticReconnect()
-            .Build();
+            // Create the connection
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl($"{_hubUrl}?username={_UserName}")
+                //.WithUrl(_hubUrl) //navigationManager.ToAbsoluteUri("/chathub"))
+                .WithAutomaticReconnect()
+                .Build();
 
-        /*
-        *
-        *   // Listen to incoming messages, uses an inline lambda method to process messages
-        *   _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
-        *   {
-            *       var encodedMsg = $"{user}: {message}";
-            *       _Messages.Add($"{user}: {message}");
-            *       InvokeAsync(StateHasChanged);
-            *   });
-        */
+            /*
+            *
+            *   // Listen to incoming messages, uses an inline lambda method to process messages
+            *   _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            *   {
+                *       var encodedMsg = $"{user}: {message}";
+                *       _Messages.Add($"{user}: {message}");
+                *       InvokeAsync(StateHasChanged);
+                *   });
+            */
 
-        // Define event handlers for SignalR events
-        _hubConnection.On<string, string>("Broadcast", BroadcastMessage); // sends to all clients
-        _hubConnection.On<string, string, string>("SendToUser", SendToUser); // sends to specific user
-        _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", (userList) =>
-            {
-                _connectedUsers = userList.ToList();
-                InvokeAsync(StateHasChanged);
-            });
+                        // Define event handlers for SignalR events
+                        _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
+            _hubConnection.On<string, string, string, int>("SendToUser", SendToUser) ; // sends to specific user
+            _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", (userList) =>
+                {
+                    _connectedUsers = userList.ToList();
+                    InvokeAsync(StateHasChanged);
+                });
 
-        // Start the connection
-        await _hubConnection.StartAsync();
-        // Notify others of new user
-        await SendAsync($"[Notice] {_UserName} joined chat room.");
+            // Start the connection
+            await _hubConnection.StartAsync();
+            // Notify others of new user
+            await SendAsync($"[Notice] {_UserName} joined chat room.");
 
         }
         catch (Exception e)
@@ -250,14 +362,24 @@ else
     /// </summary>
     /// <param name="name"></param>
     /// <param name="message"></param>
-    private void BroadcastMessage(string name, string message)
+    private async void BroadcastMessage(string name, string message, int courseId)
     {
         bool isMine = name.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
 
-        _Messages.Add(new midMessage(name, message, isMine));
+        midMessage middleMessage = new midMessage(name, message, isMine, courseId);
+
+        _Messages.Add(middleMessage);
+        _ArchiveMessages.Add(middleMessage);
+
+
+        if (!middleMessage.IsNotice)
+        {
+            await messagePageManager.AddMessageToDatabaseAsync(_UserName, _recipientUsername, courseId, message);
+        }
+
 
         // Inform blazor the UI needs updating
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
 
@@ -267,15 +389,20 @@ else
     /// <param name="senderUsername"></param>
     /// <param name="recieverUsername"></param>
     /// <param name="messageBody"></param>
-    private void SendToUser(string senderUsername, string recieverUsername, string messageBody)
+    private async void SendToUser(string senderUsername, string recieverUsername, string messageBody, int courseId)
     {
         bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
-        var messageObj = new midMessage(senderUsername, messageBody, isMine);
+        var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
         messageObj.RecieverUsername = recieverUsername;
         _Messages.Add(messageObj);
+        _ArchiveMessages.Add(messageObj);
+        if (!messageObj.IsNotice)
+        {
+            await messagePageManager.AddMessageToDatabaseAsync(senderUsername, recieverUsername, courseId, messageBody);
+        }
 
         // Inform blazor the UI needs updating
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
 
@@ -320,12 +447,22 @@ else
     /// <returns></returns>
     private async Task SendAsync(string message)
     {
-        if (_isChatting && !string.IsNullOrWhiteSpace(message) && _hubConnection is not null)
+        if (_isChatting && !string.IsNullOrWhiteSpace(message) /*&& _CourseId is not null*/ && _hubConnection is not null)
         {
             // ChatHub handles how the message is routed based on the inputs
             //      Breakpoints should be placed in /Hubs/ChatHub.cs
-            await _hubConnection.SendAsync("Broadcast", _UserName, _recipientUsername, message);
-            
+            await _hubConnection.SendAsync("Broadcast", _UserName, _recipientUsername, message, _CourseId);
+
+
+            bool isMine = _UserName.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
+            midMessage m = new midMessage(_UserName, message, isMine, _CourseId);
+
+            if (!m.IsNotice) // as long as a message isn't a notice, add it to the database
+            {
+                await messagePageManager.AddMessageToDatabaseAsync(_UserName, _recipientUsername, _CourseId, message);
+            }
+
+            await InvokeAsync(StateHasChanged);
 
 
             // clear the message input box

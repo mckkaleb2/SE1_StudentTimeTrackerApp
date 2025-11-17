@@ -248,7 +248,7 @@ namespace StudentTimeTrackerApp.Services
 
 
             var messages = _context.Messages
-                .Where(m => m.CourseID == $"{courseId}" &&
+                .Where(m => m.CourseId == courseId &&
                             ((m.Sender == userId1 && m.Recipient == userId2) ||
                              (m.Sender == userId2 && m.Recipient == userId1)))
                 .OrderBy(m => m.Timestamp)
@@ -273,7 +273,7 @@ namespace StudentTimeTrackerApp.Services
 
             var messages =  await _context.Messages
                 //.ToAsyncEnumerable()
-                .Where(m => m.CourseID == $"{courseId}" &&
+                .Where(m => m.CourseId == courseId &&
                             ((m.Sender == userId1 && m.Recipient == userId2) ||
                              (m.Sender == userId2 && m.Recipient == userId1)))
                 .OrderBy(m => m.Timestamp)
