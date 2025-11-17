@@ -1,26 +1,22 @@
 @page "/messaging"
 @using Microsoft.CodeAnalysis.CSharp.Syntax
+@using StudentTimeTrackerApp.Components.Account.Pages
 @using StudentTimeTrackerApp.Entities
 @using StudentTimeTrackerApp.Models.Entities
 @using StudentTimeTrackerApp.Services
 @rendermode InteractiveServer
 @inject CourseService CourseService
 
+@inject MessagePageService MPS
+
 <PageTitle>Messaging Page</PageTitle>
 
-
-<p>
-@Course.GetCourseName()
-</p>
-
 @code {
-    private Course? Course;
-    private String Data;
-    private ICollection<Instructor> instructors;
+    private ICollection<Course> Courses;
+    private string userID = "1";
     protected override async Task OnInitializedAsync(){
-        Course = await CourseService.AsyncGetCourseByID(1);
-        Data = $"{Course.Id}";
-        StateHasChanged();
+        Courses = await MPS.GetCoursesByUserIdAsync(userID);
+        // Courses dont seem to pulling anything not sure why?]
     }
 }
 
@@ -30,6 +26,13 @@
         <div class="dropdown">
             <button class="dropbtn">Classes</button>
             <div class="dropdown-content">
+            @if(Courses.Count() != 0){
+                @foreach(Course item in Courses){
+                    <a> item </a>
+                }
+            } else {
+                <a> nada </a>
+            }
                 <a>One</a>
                 <a>Two</a>
                 <a>Three</a>

@@ -17,8 +17,7 @@ namespace StudentTimeTrackerApp.Models.Entities
 
         public string GetCourseName()
         {
-            string CourseName = string.Empty;
-            CourseName = $"{this.CourseCode}-{this.CourseNum}-{this.SectionNum}";
+            string CourseName = $"{this.CourseCode}-{this.CourseNum}-{this.SectionNum}";
             return CourseName;
         }
     }
