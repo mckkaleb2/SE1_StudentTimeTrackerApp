@@ -333,7 +333,7 @@ else
 
                         // Define event handlers for SignalR events
                         _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
-            _hubConnection.On<string, string, string, int>("SendToUser", SendToUser) ; // sends to specific user
+            _hubConnection.On<string, string, string, int>("RecieveFromUser", RecieveFromUser) ; // sends to specific user
             _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", (userList) =>
                 {
                     _connectedUsers = userList.ToList();
@@ -358,7 +358,7 @@ else
 
 
     /// <summary>
-    /// Send a message to all connected users
+    /// (CALLED BY ChatHub) Recieve a message to all connected users
     /// </summary>
     /// <param name="name"></param>
     /// <param name="message"></param>
@@ -384,12 +384,13 @@ else
 
 
     /// <summary>
-    /// Send a message to a specific user
+    /// (CALLED BY ChatHub) Recieve a DM from a specific user
     /// </summary>
     /// <param name="senderUsername"></param>
     /// <param name="recieverUsername"></param>
     /// <param name="messageBody"></param>
     private async void SendToUser(string senderUsername, string recieverUsername, string messageBody, int courseId)
+    private async void RecieveFromUser(string senderUsername, string recieverUsername, string messageBody, int courseId)
     {
         bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
         var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
