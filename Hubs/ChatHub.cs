@@ -62,8 +62,10 @@ namespace StudentTimeTrackerApp.Hubs
             // Search for the recipient in the connected users dictionary
             else if (_connectedUsers.TryGetValue(recipient, out var connections) && connections.Count > 0)
             {
-                await Clients.Clients(connections).SendAsync("SendToUser", username, recipient, message, courseId);
+                //send to a specific user
+                await Clients.Clients(connections).SendAsync("RecieveFromUser", username, recipient, message, courseId);
             }
+            //await Clients.Caller.SendAsync();
         }
 
         public override async Task OnConnectedAsync()
