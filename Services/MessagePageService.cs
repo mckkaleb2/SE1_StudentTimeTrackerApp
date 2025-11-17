@@ -15,10 +15,17 @@ namespace StudentTimeTrackerApp.Services
     public class MessagePageService
     {
         private readonly ApplicationDbContext _context; // Add a field for the context
+        private readonly StudentService _studentService;
+        private readonly InstructorService _instructorService;
 
-        public MessagePageService(ApplicationDbContext context) // Inject the context via constructor
+
+        public MessagePageService(ApplicationDbContext context,
+                                  InstructorService instructorService,
+                                  StudentService studentService) // Inject the context via constructor
         {
             _context = context;
+            _instructorService = instructorService;
+            _studentService = studentService;
         }
 
         /// <summary>
@@ -197,6 +204,93 @@ namespace StudentTimeTrackerApp.Services
         }
 
 
+        public UserDTO GetDTOFromUserId(string userId)
+        {
+            Student? stu = _studentService.GetStudentByUserId(userId);
+            Instructor? ins = null;
+            // if that fails, try to get info using instructor service
+            if (stu == null)
+            {
+                ins = _instructorService.GetInstructorByUserId(userId);
+            }
+            UserDTO userOut = new UserDTO(_studentService, _instructorService);
+
+            if (!(stu == null))
+            {
+                userOut.UserId = userId;
+                userOut.FirstName = stu.FirstName;
+                userOut.LastName = stu.LastName;
+
+                //Email = email;
+            }
+            else if (!(ins == null))
+            {
+                userOut.UserId = userId;
+                userOut.FirstName = ins.FirstName;
+                userOut.LastName = ins.LastName;
+
+                //Email = email;
+            }
+            else
+            {
+                throw new NotImplementedException("User not found from ID");
+            }
+
+            return userOut;
+
+        }
+
+        public async Task<UserDTO> GetDTOFromUserIdAsync(string userId)
+        {
+            Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
+            Instructor? ins = null;
+            // if that fails, try to get info using instructor service
+            if (stu == null)
+            {
+                ins = await _instructorService.GetInstructorByUserIdAsync(userId);
+            }
+            UserDTO userOut = new UserDTO(_studentService, _instructorService);
+
+            if (!(stu == null))
+            {
+                userOut.UserId = userId;
+                userOut.FirstName = stu.FirstName;
+                userOut.LastName = stu.LastName;
+
+                //Email = email;
+            }
+            else if (!(ins == null))
+            {
+                userOut.UserId = userId;
+                userOut.FirstName = ins.FirstName;
+                userOut.LastName = ins.LastName;
+
+                //Email = email;
+            }
+            else
+            {
+                throw new NotImplementedException("User not found from ID");
+            }
+
+            return userOut;
+
+        }
+
+
+
+        public string? GetFullNameFromUserId(string userId)
+        {
+            UserDTO data = GetDTOFromUserId(userId);
+            string output = data.GetFullName();
+            return output;
+        }
+
+        public async Task<string?> GetFullNameFromUserIdAsync(string userId)
+        {
+            UserDTO data = await GetDTOFromUserIdAsync(userId);
+            string output = data.GetFullName();
+            return output;
+        }
 
 
         /// <summary>
