@@ -6,6 +6,8 @@
 @inject NavigationManager navigationManager
 @using StudentTimeTrackerApp.Services
 @inject MessagePageService messagePageManager
+@inject StudentService studentManager
+@inject InstructorService instructorManager
 @using StudentTimeTrackerApp.Entities;
 @using StudentTimeTrackerApp.Models.Entities;
 @using StudentTimeTrackerApp.Models;
@@ -16,7 +18,7 @@
     /// Additional sourcing, which specializes in a split client-server model, where ChatHub.cs is placed on the Server: https://github.com/dotnet/blazor-samples/blob/main/9.0/BlazorSignalRApp/BlazorSignalRApp.Client/Pages/Chat.razor
 }
 
-<h3>Chat Application</h3>
+@* <h3>Chat Application</h3> *@
 
 @* <div>
     <input @bind="_UserName" placeholder="Enter your name" />
@@ -40,12 +42,14 @@
 <!-- ................. -->
 @if (!_isChatting)
 {
-    <p>
-        Enter your name to start chatting:
-    </p>
+    <div class="alert alert-secondary mt-4" role="alert">
+        <span class="oi oi-person mr-2" aria-hidden="true"></span>
+        <input type="hidden" maxlength="32" @bind="@_UserName" />
+        <span>Click the button to Connect ==> </span>
+@*         <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
+ *@        <button type="button ml-md-auto" @onclick="@Chat"><span class="oi oi-chat" aria-hidden="true"></span> Chat!</button>
+    </div>
 
-    <input type="text" maxlength="32" @bind="@_UserName" />
-    <button type="button" @onclick="@Chat"><span class="oi oi-chat" aria-hidden="true"></span> Chat!</button>
 
     // Error messages
     @if (_message != null)
@@ -59,36 +63,49 @@ else
     // banner to show current user
     <div class="alert alert-secondary mt-4" role="alert">
         <span class="oi oi-person mr-2" aria-hidden="true"></span>
-        <span>You are connected as <b>@_UserName</b></span>
+        <span>You are connected as <b>@_displayNameUser</b></span>
         <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
     </div>
 
-    <h2>Connected users:</h2>
+@*     <h2>Connected users:</h2>
     <ul>
-        @foreach (var user in _connectedUsers)
+        @foreach (var user in _connectedNames)
         {
             <li>@user</li>
         }
-    </ul>
+    </ul> *@
 
     // display messages
     <div id="scrollbox">
+        <div>
 
         @foreach (var item in _ArchiveMessages)
         {
-            @if (item.IsNotice)
+            @try
             {
-                <div class="alert alert-info">@item.Body</div>
+                @if (item.IsNotice)
+                {
+                    <div class="alert alert-info">@item.Body</div>
+                }
+                else
+                {
+                    <div class="@item.CSS">
+                        <div class="user">@item.timestamp</div>
+                        <div class="user">(A) From: @item.fullNameUser</div>
+                        @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
+                        {
+                            <div class="user">To: @item.fullNameReciever</div>
+                        }
+                        <div class="msg">@item.Body</div>
+                    </div>
+                }
             }
-            else
+            catch(Exception e)
             {
                 <div class="@item.CSS">
-                    <div class="user">(A) From: @item.Username</div>
-                    @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
-                    {
-                        <div class="user">To: @item.RecieverUsername</div>
-                    }
-                    <div class="msg">@item.Body</div>
+                    <div class="msg">
+                        @e
+                    </div>
                 </div>
             }
         }
@@ -104,10 +121,12 @@ else
             else
             {
                 <div class="@item.CSS">
-                    <div class="user">From: @item.Username</div>
+                    <div class="user">@item.timestamp</div>
+                    <div class="user">From: @item.fullNameUser</div>
+
                     @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
                     {
-                        <div class="user">To: @item.RecieverUsername</div>
+                        <div class="user">To: @item.fullNameReciever</div>
                     }
                     <div class="msg">@item.Body</div>
                 </div>
@@ -115,18 +134,34 @@ else
         }
 
 
-        <hr />
-        <div id="sentto">
-            <label for="recipientUsername">Send message to:</label>
-            <input type="text" id="recipientUsername" @bind="_recipientUsername" />
+
+
         </div>
-        <textarea class="input-lg" placeholder="enter your comment" @bind="@_newMessage"></textarea>
+
+        <!-- ____________________________________________________ -->
+        <hr />
+        <div>
+            <div id="sentto">
+                <label for="recipientUsername">Send message to:</label>
+                <input type="hidden" id="recipientUsername" @bind="_recipientUsername" />
+            </div>
+            <textarea class="input-lg" placeholder="enter your comment" @bind="@_newMessage"></textarea>
         
-        @* Breakpoints  can be placed here! 
-            |
-            V   *@
-        <button class="btn btn-default" @onclick="@(() => SendAsync(_newMessage))">Send</button>
+            @* Breakpoints  can be placed here! 
+                |
+                V   *@
+            <button class="btn btn-default" @onclick="@(() => SendAsync(_newMessage))">Send</button>
+        </div>
+
+        <div class="alert alert-secondary mt-4" role="alert">
+            <span class="oi oi-person mr-2" aria-hidden="true"></span>
+            <span>You are connected as <b>@_displayNameUser</b></span>
+            <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
+        </div>
+    
     </div>
+
+
 }
 
 
@@ -152,6 +187,7 @@ else
             Mine = mine;
             CourseId = courseId;
         }
+
         /// <summary>
         /// Sender
         /// </summary>
@@ -160,6 +196,11 @@ else
         /// Recipient
         /// </summary>
         public string? RecieverUsername { get; set; } = string.Empty;
+
+        public string? fullNameUser { get; set; }
+        public string? fullNameReciever { get; set; }
+        public string? timestamp { get; set; } = $"{DateTime.Now}";
+        // public DateTime? timestamp { get; set; }
 
         public int CourseId { get; set; }
 
@@ -199,6 +240,9 @@ else
     // on-screen recipientUsername
     private string _recipientUsername;
 
+    private string? _displayNameUser;
+    private string? _displayNameReciever;
+
     // new message input
     private string? _newMessage;
 
@@ -210,6 +254,7 @@ else
 
     // list of Users in chat
     private List<string> _connectedUsers = new List<string>(); //NOTE: it might be worth checking the Type of this list later
+    private List<string?> _connectedNames = new List<string?>(); //NOTE: it might be worth checking the Type of this list later
 
     private HubConnection? _hubConnection;
     private string _hubUrl;
@@ -220,6 +265,41 @@ else
 
     // }
 
+    public async Task<List<string?>> getUserNamesAsync(List<string> users)
+    {
+        List<string?> output = new();
+        foreach (var user in users)
+        {
+            await getFullNameAsync(user);
+        }
+        return output;
+    }
+    public List<string?> getUserNames(List<string> users)
+    {
+        List<string?> output = new();
+        foreach (var user in users)
+        {
+            output.Add(getFullName(user));
+        }
+        return output;
+    }
+
+
+    public string? getFullName(string userId)
+    {
+        string? output = messagePageManager.GetFullNameFromUserId(userId);
+        return output;
+    }
+    public async Task<string?> getFullNameAsync(string userId)
+    {
+        string? output = await messagePageManager.GetFullNameFromUserIdAsync(userId);
+        return output;
+    }
+
+
+
+
+
     /// <summary>
     /// Implement optional parameters
     /// 
@@ -227,19 +307,25 @@ else
     /// </summary>
     protected override void OnParametersSet()
     {
+
         if (!string.IsNullOrWhiteSpace(Recipient))
         {
             _recipientUsername = Recipient.Trim();
-
+            _displayNameReciever = getFullName(_recipientUsername);
         }
-        // if (!string.IsNullOrWhiteSpace(User))
-        // {
-        //     _UserName = User?.Trim();
-        // }
-        // if (_CourseId == null)
-        // {
-        //     _CourseId = CourseId;
-        // }
+        if (!string.IsNullOrWhiteSpace(User))
+        {
+            _UserName = User?.Trim();
+            _displayNameUser = getFullName(_UserName);
+            // _displayNameUser = _UserName;
+        }
+        if (_CourseId == null)
+        {
+            _CourseId = CourseId;
+        }
+
+
+
     }
 
 
@@ -273,8 +359,19 @@ else
         {
             bool isMine = m.Sender.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage formattedMessage = new midMessage(m.Sender, m.Body, isMine, m.CourseId);
+            formattedMessage.timestamp = $"{m.Timestamp}";
+            var fnUser = getFullNameAsync(m.Sender);
+            var fnReciever = getFullNameAsync(_recipientUsername);
+            await Task.WhenAll(fnUser, fnReciever);
+
+            formattedMessage.fullNameUser = fnUser.Result;
+            formattedMessage.fullNameReciever = fnReciever.Result;
+
             _ArchiveMessages.Add(formattedMessage);
         }
+
+        _ArchiveMessages.OrderByDescending(m => m.timestamp);
+
         await InvokeAsync(StateHasChanged);
 
     }
@@ -288,6 +385,8 @@ else
         _UserName = User?.Trim();
         _recipientUsername = Recipient?.Trim();
         _CourseId = CourseId;
+        _displayNameUser = getFullName(_UserName);
+
 
 
         if (string.IsNullOrWhiteSpace(_UserName))
@@ -318,7 +417,10 @@ else
                 .WithUrl($"{_hubUrl}?username={_UserName}")
                 //.WithUrl(_hubUrl) //navigationManager.ToAbsoluteUri("/chathub"))
                 .WithAutomaticReconnect()
+                .WithServerTimeout(TimeSpan.FromSeconds(30)).WithKeepAliveInterval(TimeSpan.FromSeconds(15))
                 .Build();
+
+            _hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(15);
 
             /*
             *
@@ -331,19 +433,20 @@ else
                 *   });
             */
 
-                        // Define event handlers for SignalR events
-                        _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
+                                    // Define event handlers for SignalR events
+                                    _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
             _hubConnection.On<string, string, string, int>("RecieveFromUser", RecieveFromUser) ; // sends to specific user
-            _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", (userList) =>
+            _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", async (userList) =>
                 {
                     _connectedUsers = userList.ToList();
+                    //_connectedNames = messagePageManager.GetFullNameFromUserIdList(_connectedUsers); 
                     InvokeAsync(StateHasChanged);
                 });
 
             // Start the connection
             await _hubConnection.StartAsync();
             // Notify others of new user
-            await SendAsync($"[Notice] {_UserName} joined chat room.");
+            await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
 
         }
         catch (Exception e)
@@ -367,6 +470,11 @@ else
         bool isMine = name.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
 
         midMessage middleMessage = new midMessage(name, message, isMine, courseId);
+        middleMessage.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
+
+        middleMessage.fullNameUser = await getFullNameAsync(name);
+        middleMessage.fullNameReciever = await getFullNameAsync(_UserName);
+
 
         _Messages.Add(middleMessage);
         // Inform blazor the UI needs updating
@@ -386,6 +494,11 @@ else
         bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
         var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
         messageObj.RecieverUsername = recieverUsername;
+        messageObj.fullNameUser = await getFullNameAsync(senderUsername);
+        messageObj.fullNameReciever = await getFullNameAsync(recieverUsername);
+        messageObj.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
+
+        
         _Messages.Add(messageObj);
 
         // Inform blazor the UI needs updating
@@ -443,6 +556,8 @@ else
 
             bool isMine = _UserName.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage m = new midMessage(_UserName, message, isMine, _CourseId);
+            m.fullNameUser = await getFullNameAsync(_UserName);
+            m.fullNameReciever = await getFullNameAsync(_recipientUsername);
 
             _Messages.Add(m);
             if (!m.IsNotice) // as long as a message isn't a notice, add it to the database
