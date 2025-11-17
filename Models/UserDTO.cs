@@ -131,6 +131,7 @@ namespace StudentTimeTrackerApp.Models
             }
             else
             {
+                Console.WriteLine("CONDITION FAILED");
                 throw new NotImplementedException("User not found from ID");
             }
             // if that fails, try to get info using instructor service

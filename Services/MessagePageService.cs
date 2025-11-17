@@ -242,7 +242,8 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<UserDTO> GetDTOFromUserIdAsync(string userId)
         {
-            Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
+            Student? stu = _studentService.GetStudentByUserId(userId);
+            //Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
             Instructor? ins = null;
             // if that fails, try to get info using instructor service
             if (stu == null)
@@ -287,11 +288,39 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<string?> GetFullNameFromUserIdAsync(string userId)
         {
-            UserDTO data = await GetDTOFromUserIdAsync(userId);
-            string output = data.GetFullName();
+            var data = GetDTOFromUserIdAsync(userId);
+
+            await Task.WhenAll(data);
+            
+            string output = data.Result.GetFullName();
             return output;
         }
 
+        public List<string?> GetFullNameFromUserIdList(List<string> userIds)
+        {
+            //List<UserDTO> tempusers = new();
+            List<string?> tempnames = new();
+            foreach (var user in userIds)
+            {
+                var tempDto = GetFullNameFromUserId(user);
+                tempnames.Add(tempDto);
+            }
+            return tempnames;
+        }
+
+
+        public async Task<List<string?>> GetFullNameFromUserIdListAsync(List<string> userIds)
+        {
+            //List<UserDTO> tempusers = new();
+            List<string?> tempnames = new();
+            foreach(var user in userIds)
+            {
+                var tempDto = GetFullNameFromUserIdAsync(user);
+                await Task.WhenAll(tempDto);
+                tempnames.Add(tempDto.Result);
+            }
+            return tempnames;
+        }
 
         /// <summary>
         /// async version of GetUsersByCourseId
