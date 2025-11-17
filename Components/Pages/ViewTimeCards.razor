@@ -1,0 +1,71 @@
+﻿@page "/viewtimecards"
+@using System.Security.Claims
+@using StudentTimeTrackerApp.Models
+@using StudentTimeTrackerApp.Models.Entities
+@using StudentTimeTrackerApp.Entities
+@inject StudentTimeTrackerApp.Services.InstructorService InstructorService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject StudentTimeTrackerApp.Services.CourseService CourseService
+@inject StudentTimeTrackerApp.Services.TimeCardService TimeCardService
+
+style 
+
+<h3>ViewTimeCards</h3>
+
+<select class="form-select" @onchange="OnCourseChanged">
+    @foreach(var course in Courses)
+    {
+        <option value="@course.Id">@course.CourseCode-@course.CourseNum-@course.SectionNum</option>
+    }
+</select>
+
+@if(selectedCourseId != 0)
+{
+    @foreach (var student in selectedCourse!.Students)
+    {
+       <h2>@student.FirstName @student.LastName</h2>
+       <IViewTimeCard StudentUserId="@student.UserID" />
+    }
+
+}
+
+@code {
+    private bool IsInstructor = false;
+    private string newUserId = string.Empty;
+    private Course? selectedCourse;
+    private int selectedCourseId = 0;
+    private List<Course> Courses = new List<Course>();
+    private List<Timecard> Timecards = new List<Timecard>();
+    private List<Student> Students = new List<Student>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            IsInstructor = InstructorService.UserIsInstructor(userId!);
+            newUserId = userId;
+
+            if (IsInstructor)
+            {
+                Courses = CourseService.FindCoursesByInstructor(newUserId)!;
+            }
+        }
+    }
+
+    private void OnCourseChanged(ChangeEventArgs e)
+    {
+        selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
+        selectedCourse = CourseService.GetCourseById(selectedCourseId);
+        Students = CourseService.GetStudentsInCourse(selectedCourseId);
+    }
+    // Grab the Students and Timecards to create the list of output.
+
+
+
+
+}

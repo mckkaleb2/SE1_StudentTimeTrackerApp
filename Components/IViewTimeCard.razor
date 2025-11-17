@@ -1,0 +1,90 @@
+﻿@using StudentTimeTrackerApp.Services
+@using Models.Entities
+@using System.Security.Claims
+@inject TimeCardService TimeCardService
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="mb-0">Time Entry History</h3>
+        <button class="btn btn-primary" @onclick="LoadTimeEntries">Refresh</button>
+    </div>
+    <div class="card-body">
+        @if (timeEntries == null)
+        {
+            <p>Loading...</p>
+        }
+        else if (!timeEntries.Any())
+        {
+            <p>No time entries found.</p>
+        }
+        else
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Clock In Time</th>
+                        <th>Clock Out Time</th>
+                        <th>Total Hours</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in timeEntries)
+                    {
+                        <tr>
+                            <td>@entry.TimeIn.ToLocalTime().ToShortDateString()</td>
+                            <td>@entry.TimeIn.ToLocalTime().ToShortTimeString()</td>
+                            <td>
+                                @(entry.TimeOut.HasValue
+                                                        ? entry.TimeOut.Value.ToLocalTime().ToShortTimeString()
+                                                        : "Active")
+                    </td>
+                    <td>
+                        @if (entry.TimeOut.HasValue)
+                                {
+                                    var duration = entry.TimeOut.Value - entry.TimeIn;
+                                    @duration.TotalHours.ToString("F2")
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@GetMapsUrl(entry.Latitude, entry.Longitude)"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Location
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<TimeEntry> timeEntries;
+
+    [Parameter]
+    public required string StudentUserId {get; set;}
+
+    protected override void OnInitialized()
+    {
+        timeEntries = TimeCardService.GetTimeEntriesForStudent(StudentUserId);
+    }
+
+    private void LoadTimeEntries()
+    {
+        timeEntries = TimeCardService.GetTimeEntriesForStudent(StudentUserId!);
+        StateHasChanged();
+    }
+
+    private string GetMapsUrl(double lat, double lng) =>
+        $"https://www.google.com/maps/search/?api=1&query={lat},{lng}";
+}

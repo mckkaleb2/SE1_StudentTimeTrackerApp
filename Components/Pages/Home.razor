@@ -102,7 +102,13 @@
     public int SectionNum { get; set; }
 
 
-
+    /// <summary>
+    /// Calls the 'CreateCourse' method from the Service.
+    /// </summary>
+    /// <param name="newUserId">The Id of the currently logged in user.</param>
+    /// <param name="courseCode">The code for the Course (i.e., CSCI, Hist, etc.)</param>
+    /// <param name="courseNum">The number for the Course (i.e., 1120, 4250, etc.)</param>
+    /// <param name="sectionNum">The section number for the Course.</param>
     private void CallCreateCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
     {
         errorMessage = CourseService.CreateCourse(newUserId, courseCode, courseNum, sectionNum);
@@ -112,6 +118,13 @@
         }
     }
 
+    /// <summary>
+    /// Calls the FindCourse function from the Course Service.
+    /// </summary>
+    /// <param name="newUserId">The Id of the currently logged in user.</param>
+    /// <param name="courseCode">The code for the Course (i.e., CSCI, Hist, etc.)</param>
+    /// <param name="courseNum">The number for the Course (i.e., 1120, 4250, etc.)</param>
+    /// <param name="sectionNum">The section number for the Course.</param>
     private void CallFindCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
     {
         errorMessage = CourseService.FindCourse(newUserId, courseCode, courseNum, sectionNum);
