@@ -369,16 +369,8 @@ else
         midMessage middleMessage = new midMessage(name, message, isMine, courseId);
 
         _Messages.Add(middleMessage);
-        _ArchiveMessages.Add(middleMessage);
-
-
-        if (!middleMessage.IsNotice)
-        {
-            await messagePageManager.AddMessageToDatabaseAsync(_UserName, _recipientUsername, courseId, message);
-        }
-
-
         // Inform blazor the UI needs updating
+        //StateHasChanged();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -395,11 +387,6 @@ else
         var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
         messageObj.RecieverUsername = recieverUsername;
         _Messages.Add(messageObj);
-        _ArchiveMessages.Add(messageObj);
-        if (!messageObj.IsNotice)
-        {
-            await messagePageManager.AddMessageToDatabaseAsync(senderUsername, recieverUsername, courseId, messageBody);
-        }
 
         // Inform blazor the UI needs updating
         await InvokeAsync(StateHasChanged);
@@ -457,6 +444,7 @@ else
             bool isMine = _UserName.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage m = new midMessage(_UserName, message, isMine, _CourseId);
 
+            _Messages.Add(m);
             if (!m.IsNotice) // as long as a message isn't a notice, add it to the database
             {
                 await messagePageManager.AddMessageToDatabaseAsync(_UserName, _recipientUsername, _CourseId, message);
