@@ -26,6 +26,7 @@ namespace StudentTimeTrackerApp.Models
         //public string Suffix { get; set; }
         public string? Email { get; set; }
 
+        public bool isInstructor { get; set; } = false;
 
         public UserDTO(string userId,
                         string firstName,
@@ -61,12 +62,14 @@ namespace StudentTimeTrackerApp.Models
 
         public UserDTO MakeDTOFromUserId(string userId)
         {
+            bool instructorFlag = false;
             Student? stu = _studentService.GetStudentByUserId(userId);
             Instructor? ins = null;
             // if that fails, try to get info using instructor service
             if (stu == null)
             {
                 ins = _instructorService.GetInstructorByUserId(userId);
+                instructorFlag = true;
             }
             UserDTO userOut = new UserDTO(_studentService, _instructorService);
 
@@ -83,7 +86,7 @@ namespace StudentTimeTrackerApp.Models
                 userOut.UserId = userId;
                 userOut.FirstName = ins.FirstName;
                 userOut.LastName = ins.LastName;
-
+                userOut.isInstructor = instructorFlag;
                 //Email = email;
             }
             else

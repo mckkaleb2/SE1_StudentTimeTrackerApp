@@ -18,7 +18,7 @@
     /// Additional sourcing, which specializes in a split client-server model, where ChatHub.cs is placed on the Server: https://github.com/dotnet/blazor-samples/blob/main/9.0/BlazorSignalRApp/BlazorSignalRApp.Client/Pages/Chat.razor
 }
 
-@* <h3>Chat Application</h3> *@
+<h3>Chat: @_displayNameReciever</h3>
 
 @* <div>
     <input @bind="_UserName" placeholder="Enter your name" />
@@ -385,7 +385,7 @@ else
         _UserName = User?.Trim();
         _recipientUsername = Recipient?.Trim();
         _CourseId = CourseId;
-        _displayNameUser = getFullName(_UserName);
+        //_displayNameUser = getFullName(_UserName);
 
 
 
@@ -402,7 +402,7 @@ else
 
             // Start chatting and force refresh UI, ref: https://github.com/dotnet/aspnetcore/issues/22159
             _isChatting = true;
-            await Task.Delay(1);
+            await Task.Delay(3);
 
             // remove old messages if any
             _Messages.Clear();
@@ -417,7 +417,7 @@ else
                 .WithUrl($"{_hubUrl}?username={_UserName}")
                 //.WithUrl(_hubUrl) //navigationManager.ToAbsoluteUri("/chathub"))
                 .WithAutomaticReconnect()
-                .WithServerTimeout(TimeSpan.FromSeconds(30)).WithKeepAliveInterval(TimeSpan.FromSeconds(15))
+                //.WithServerTimeout(TimeSpan.FromSeconds(30)).WithKeepAliveInterval(TimeSpan.FromSeconds(15))
                 .Build();
 
             _hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(15);
@@ -446,6 +446,9 @@ else
             // Start the connection
             await _hubConnection.StartAsync();
             // Notify others of new user
+            
+            _displayNameUser = await getFullNameAsync(_UserName);
+
             await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
 
         }

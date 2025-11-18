@@ -3,22 +3,19 @@
 @using StudentTimeTrackerApp.Components.Account.Pages
 @using StudentTimeTrackerApp.Entities
 @using StudentTimeTrackerApp.Models.Entities
+@using StudentTimeTrackerApp.Models
 @using StudentTimeTrackerApp.Services
 @rendermode InteractiveServer
 @inject CourseService CourseService
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
 
 @inject MessagePageService MPS
 
 <PageTitle>Messaging Page</PageTitle>
 
-@code {
-    private ICollection<Course> Courses;
-    private string userID = "1";
-    protected override async Task OnInitializedAsync(){
-        Courses = await MPS.GetCoursesByUserIdAsync(userID);
-        // Courses dont seem to pulling anything not sure why?]
-    }
-}
+
 
 
 <div class="row">
@@ -35,22 +32,82 @@
             }
             </div>
         </div>
+        @if(userDTOs != null && userDTOs.Count() != 0){
             <ul class="users">
-            <!-- foreach users in CLASS add li object? -->
-                <li> Us01 </li>
-                <li> Us02 </li>
-                <li> Us03 </li>
-                <li> Us04 </li>
-                <li> Us05 </li>
-                <li> Us06 </li>
-                <li> Us07 </li>
-                <li> Us08 </li>
+                @foreach(UserDTO user in userDTOs)
+                {
+                    <li><a>@user.GetFullName()</a></li>
+                }
+                <!-- foreach users in CLASS add li object? -->
             </ul>
+        }
     </div>
     <div class="column right">
-        <Chat UserName="Billy Bob"></Chat>
+
+
+        @* <Chat UserName="Billy Bob"></Chat> *@
+
+        @{
+            if (isSelected = true)
+            {
+                <SignalChat User=@userId Recipient=@testRecipientId CourseId=@_CourseId></SignalChat>
+
+            }
+            else
+            {
+                <div>not selected</div>
+            }
+        }
+
+
     </div>
 </div>
+
+
+
+@code {
+    private ICollection<Course> Courses;
+    private ICollection<UserDTO> userDTOs;
+
+    string? userId = string.Empty;
+    string? userName = string.Empty;
+    string? recipientId = string.Empty;
+
+    // set to student1@etsu.edu , Pass123!
+    string? testRecipientId = "a340066d-ebd9-49cb-9cbc-e60c50393ddc";
+    private int _CourseId;
+    private int testCourseId = 1;
+
+    public bool isSelected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity!.IsAuthenticated)
+        {
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            StateHasChanged();
+        }
+
+        var courseGetter = MPS.GetCoursesByUserIdAsync(userId);
+        await Task.WhenAll(courseGetter);
+
+        Courses = courseGetter.Result;
+
+        _CourseId = testCourseId;
+        var userGetter = MPS.GetUsersByCourseIdAsync(_CourseId); 
+        await Task.WhenAll(userGetter);
+
+        userDTOs = userGetter.Result;
+
+        isSelected = true;
+    }
+
+
+}
+
 
 <style>
     .column {
