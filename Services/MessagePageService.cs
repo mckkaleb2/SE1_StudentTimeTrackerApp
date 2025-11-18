@@ -54,19 +54,36 @@ namespace StudentTimeTrackerApp.Services
         /// will be empty.</returns>
         public async Task<ICollection<Course>> GetCoursesByUserIdAsync(string userId)
         {
-            // get the courses that are taught by the user, if any
-            var taughtCourses = await _context.Courses
-                .Where(c => c.Instructors.Any(i => i.UserId == userId))
-                .ToListAsync();
+            List<Course> allCourses = new();
+            try
+            {
+                // get the courses that are taught by the user, if any
+                //var taughtCourses = await _context.Courses
+                //    .Where(c => c.Instructors.Any(i => i.UserId == userId))
+                //    .ToListAsync();
 
-            // get the courses that are enrolled in by the user, if any
-            var enrolledCourses = await _context.Courses
-                .Where(c => c.Students.Any(s => s.UserID == userId))
-                .ToListAsync();
+                List<Course> taughtCourses = _context.Instructors
+                    .Where(i => i.UserId == userId)
+                    .SelectMany(i => i.Courses).ToList();
+                //.ToListAsync();
 
-            // create a new list that combines both lists without duplicates
-            var allCourses = taughtCourses.Union(enrolledCourses).ToList();
+                // get the courses that are enrolled in by the user, if any
+                List<Course> enrolledCourses = _context.Students
+                    //.Where(c => c.Students.Any(s => s.UserID == userId))
+                    //.ToListAsync();
+                    .Where(s => s.UserID == userId)
+                    .SelectMany(s => s.Courses)
+                    .ToList();
 
+
+                // create a new list that combines both lists without duplicates
+                allCourses = taughtCourses.Union(enrolledCourses).ToList();
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
             return allCourses;
         }
 
