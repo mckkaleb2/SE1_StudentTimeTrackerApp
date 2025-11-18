@@ -29,13 +29,11 @@
             @if(Courses.Count() != 0){
                 @foreach(Course item in Courses){
                     <a> item </a>
+                    <a> @item.GetCourseName() </a>
                 }
             } else {
                 <a> nada </a>
             }
-                <a>One</a>
-                <a>Two</a>
-                <a>Three</a>
             </div>
         </div>
             <ul class="users">
