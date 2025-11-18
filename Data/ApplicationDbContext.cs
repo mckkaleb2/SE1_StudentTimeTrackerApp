@@ -14,5 +14,5 @@ namespace StudentTimeTrackerApp.Data
         public DbSet<Timecard> Timecards { get; set; }
         public DbSet<TimeEntry> TimeEntries { get; set; }
         public DbSet<Message> Messages { get; set; }
-        }
+    }
 }

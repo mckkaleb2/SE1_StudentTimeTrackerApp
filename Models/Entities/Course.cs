@@ -15,10 +15,9 @@ namespace StudentTimeTrackerApp.Models.Entities
         public ICollection<Instructor> Instructors { get; set; } = new List<Instructor>();
 
 
-        public string GetCourseName(string CourseCode, int CourseNum, int SectionNum)
+        public string GetCourseName()
         {
-            string CourseName = string.Empty;
-            CourseName = $"{CourseCode}-{CourseNum}-{SectionNum}";
+            string CourseName = $"{this.CourseCode}-{this.CourseNum}-{this.SectionNum}";
             return CourseName;
         }
     }

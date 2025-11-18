@@ -3,8 +3,6 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Home</h1>
-
 <AuthorizeView>
     <Authorized>
         <div class="alerts"> 
@@ -18,14 +16,56 @@
     <NotAuthorized>
         <div class="login">
             Please Login or Register:
+                <div class="loginButton">
+                    <NavLink class="nav-link" href="Account/Login">
+                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+                <div class="registerButton">
+                    <NavLink class="nav-link" href="Account/Register">
+                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
 <style>
+    body{
+        background-image: linear-gradient(to top, rgba(254, 227, 148, 1), white);
+    }
+
     .alerts{
         border: solid;
         text-align: center;
+    }
+
+    .login{
+        margin: auto;    
+        border: solid;
+        text-align: center;
+        justify-content: flex-end;
+        width: fit-content;
+        margin-top: 15%;
+        margin-bottom: 20%;
+        padding: 5%;
+        background-color: white;
+        font-size: x-large;
+        color: black;
+        border-radius: 10px;
+        border-color: blue;
+    }
+
+    .login .loginButton{
+        background-color: blue;
+        color: yellow;
+        border-radius: 10px;
+        font-size: large;
+
+    }
+
+    .login .registerButton{
+        font-size: medium;
     }
 </style>
 
