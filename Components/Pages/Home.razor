@@ -1,17 +1,63 @@
 ﻿@page "/"
-@{int num = 1;}
+@using System.Security.Claims   
+@inject StudentTimeTrackerApp.Services.StudentService StudentService
+@inject StudentTimeTrackerApp.Services.InstructorService InstructorService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject StudentTimeTrackerApp.Services.CourseService CourseService
 
 <PageTitle>Home</PageTitle>
 
 <AuthorizeView>
     <Authorized>
-        <div class="alerts"> 
-            You have @num new Message(s)!
-        </div>
+        @if (IsStudent) {
+            <div class="timeclock">
+                @if(isWorking == false)
+                {
+                    @errorMessage
+                }
+                <br />
+                <br />
+                <br />
+                <Clock></Clock>
+                <br />
+                <br />
+                <br />
+                <h1>Join a Course!</h1>
+                <form>
+                    <label>Course Code:</label>
+                    <input placeholder="Ex. CSCI, HIST, etc." type="text" id="CouseCode" @bind-value="CourseCode" />
+                    <label>Course Number:</label>
+                    <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum" />
+                    <label>Section Number:</label>
+                    <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum" />
+                </form>
+                <button class="btn btn-success" @onclick="() => CallFindCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
+                }
 
-        <div class="timeclock">
-            <Clock></Clock>
-        </div>
+            </div>
+        }
+        @if (IsInstructor) {
+            @if (isWorking == false)
+            {
+                <h1>@errorMessage</h1>
+            }
+            <br />
+            <br />
+            <br />
+            
+            <h1>Hi Instructor</h1>
+
+           <h1>Create a Course!</h1>
+           <form>
+               <label>Course Code:</label>
+               <input placeholder="Ex. CSCI, HIST, etc."type="text" id="CouseCode" @bind-value="CourseCode" />
+               <label>Course Number:</label>
+               <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum"/>
+               <label>Section Number:</label>
+               <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum"/>
+           </form>
+           <button class="btn btn-success" @onclick="() => CallCreateCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
+        }
     </Authorized>
     <NotAuthorized>
         <div class="login">
@@ -69,4 +115,62 @@
     }
 </style>
 
+@code {
+    private bool IsStudent = false;
+    private bool IsInstructor = false;
+    private string newUserId = string.Empty;
+    bool isWorking = true;
+    string errorMessage = string.Empty;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            IsStudent = StudentService.UserIsStudent(userId!);
+            IsInstructor = InstructorService.UserIsInstructor(userId!);
+            newUserId = userId;
+        }
+    }
+
+    // Create a Course in Instructor View
+    public string CourseCode { get; set; } = string.Empty;
+    public int CourseNum { get; set; }
+    public int SectionNum { get; set; }
+
+
+    /// <summary>
+    /// Calls the 'CreateCourse' method from the Service.
+    /// </summary>
+    /// <param name="newUserId">The Id of the currently logged in user.</param>
+    /// <param name="courseCode">The code for the Course (i.e., CSCI, Hist, etc.)</param>
+    /// <param name="courseNum">The number for the Course (i.e., 1120, 4250, etc.)</param>
+    /// <param name="sectionNum">The section number for the Course.</param>
+    private void CallCreateCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
+    {
+        errorMessage = CourseService.CreateCourse(newUserId, courseCode, courseNum, sectionNum);
+        if (errorMessage != string.Empty)
+        {
+            isWorking = false;
+        }
+    }
+
+    /// <summary>
+    /// Calls the FindCourse function from the Course Service.
+    /// </summary>
+    /// <param name="newUserId">The Id of the currently logged in user.</param>
+    /// <param name="courseCode">The code for the Course (i.e., CSCI, Hist, etc.)</param>
+    /// <param name="courseNum">The number for the Course (i.e., 1120, 4250, etc.)</param>
+    /// <param name="sectionNum">The section number for the Course.</param>
+    private void CallFindCourse(string newUserId, string courseCode, int courseNum, int sectionNum)
+    {
+        errorMessage = CourseService.FindCourse(newUserId, courseCode, courseNum, sectionNum);
+        if (errorMessage != string.Empty)
+        {
+            isWorking = false;
+        }
+    }
+}
