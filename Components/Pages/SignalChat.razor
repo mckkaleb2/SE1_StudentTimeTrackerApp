@@ -411,7 +411,7 @@ else
         if ((!string.IsNullOrWhiteSpace(user)) || user?.Trim() != _UserName)
         {
             _UserName = User?.Trim();
-            _displayNameUser = getFullName(_UserName);
+            _displayNameUser = await getFullNameAsync(_UserName);
             // _displayNameUser = _UserName;
         }
         if (courseId != 0)
@@ -606,6 +606,7 @@ else
             // Notify others of new user
             
             _displayNameUser = await getFullNameAsync(_UserName);
+            
             await Task.Delay(2);
             await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
 
