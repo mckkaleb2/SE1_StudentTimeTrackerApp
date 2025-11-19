@@ -110,12 +110,22 @@ namespace StudentTimeTrackerApp.Services
             return courses;
         }
 
+        /// <summary>
+        /// Finds the Course By the Id number
+        /// </summary>
+        /// <param name="courseId">The Id of the Course object.</param>
+        /// <returns>The Course object.</returns>
         public Course? GetCourseById(int courseId)
         {
             return _context.Courses
                 .FirstOrDefault(c => c.Id == courseId);
         }
 
+        /// <summary>
+        /// Retrieves all the Students in a Course
+        /// </summary>
+        /// <param name="courseId">The Id of the Course object.</param>
+        /// <returns>The Student objects as a List.</returns>
         public List<Student>? GetStudentsInCourse(int courseId)
         {
             var course = _context.Courses
