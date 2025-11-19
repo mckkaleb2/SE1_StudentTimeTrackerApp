@@ -10,6 +10,7 @@
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
 
+@attribute [StreamRendering]
 
 @inject MessagePageService MPS
 
@@ -20,61 +21,52 @@
 
 <div class="row">
     <div class="column left">
-        <div class="dropdown">
-            <button class="dropbtn">Classes</button>
-            <div class="dropdown-content">
-            @if(Courses.Count() != 0){
-                @foreach(Course item in Courses){
-                    <a> @item.GetCourseName() </a>
-                }
-            } else {
-                <a> nada </a>
-            }
-            </div>
-        </div>
+        
 
 
 
         <select class="form-select" @onchange="OnCourseChanged">
+            
+            <option value="" disabled selected>Select a course:</option>
             @foreach (var course in Courses)
             {
                 <option value="@course.Id">@course.GetCourseName()</option>
             }
+
         </select>
 
-@* 
-        <li @onclick="(() => OnFruitClicked(fruit))"
-            style="font-size: 20px; cursor: pointer"
-            class="p-1 mb-1 @(selectedFruits.Contains(fruit) ? "bg-success" : null)">
-            @fruit
-        </li> *@
-
         
-
-        @if(userDTOs != null && userDTOs.Count() != 0){
-            <ul class="users">
-                @foreach(UserDTO user in userDTOs)
-                {
-                    @if(user.UserId != userId)
+        @if(!(_selectedCourseId == 0)) //if there is a selected course, do the following
+        {
+            if (userDTOs == null) { <p>userDTOs is null</p>}
+            else if (userDTOs != null && userDTOs.Count() <= 1) { <p>There's no one else in the class!</p>}
+            else if(userDTOs != null && userDTOs.Count() != 0){
+                <ul class="users">
+                    @foreach(UserDTO user in userDTOs)
                     {
-                        <li @onclick="(() => OnUserClicked(user))"
-                            style="cursor: pointer;">
-                            @if(user.UserId == recipientId)
-                            {
-                                <a style="background-color:gold">@user.GetFullName()</a>
-                            }
-                            else
-                            {
-                                <a>@user.GetFullName()</a>
-                            }
-                        </li>
-                    }
-@*                     <input Name="UserSelect" Label="Yes" @bind-Value="isYesOn" />
- *@                    @* <RadioInput Name="EnableNotifications" Label="No" @bind-Value="isNoOn" /> *@
+                        @if(user.UserId != userId)
+                        {
+                            <li @onclick="(() => OnUserClicked(user))"
+                                style="cursor: pointer;">
+                                @if(user.UserId == recipientId)
+                                {
+                                    <a style="background-color:gold">@user.GetFullName()</a>
+                                }
+                                else
+                                {
+                                    <a>@user.GetFullName()</a>
+                                }
+                            </li>
+                        }
 
-                }
-                <!-- foreach users in CLASS add li object? -->
-            </ul>
+                    }
+                    <!-- foreach users in CLASS add li object? -->
+                </ul>
+            }
+        }
+        else
+        {
+           <div><p>Select a course</p></div> 
         }
     </div>
     <div class="column right">
@@ -99,7 +91,7 @@
 
             else
             {
-                <div>not selected</div>
+                <div><p><em>Select a user to chat...</em></p></div>
             }
         }
 
@@ -162,15 +154,18 @@
     {
 
         _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
-        _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
-
-        var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
-        if (userGetter != null){
-            userDTOs = userGetter.ToList();
-        }
-        else
+        if (_selectedCourseId != 0)
         {
-            userDTOs.Clear();
+            _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
+
+            var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
+            if (userGetter != null){
+                userDTOs = userGetter.ToList();
+            }
+            else
+            {
+                userDTOs.Clear();
+            }
         }
 
         //Students = CourseService.GetStudentsInCourse(_selectedCourseId);

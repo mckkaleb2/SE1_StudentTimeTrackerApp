@@ -12,76 +12,92 @@
 @using StudentTimeTrackerApp.Models.Entities;
 @using StudentTimeTrackerApp.Models;
 
+@attribute [StreamRendering]
+
+
 @{
     /// Primarily Sourced from https://www.c-sharpcorner.com/article/building-a-real-time-chat-application-with-signalr-in-blazor-net-9/
 
     /// Additional sourcing, which specializes in a split client-server model, where ChatHub.cs is placed on the Server: https://github.com/dotnet/blazor-samples/blob/main/9.0/BlazorSignalRApp/BlazorSignalRApp.Client/Pages/Chat.razor
 }
 
-<h3>Chat: @_displayNameReciever</h3>
-
-@* <div>
-    <input @bind="_UserName" placeholder="Enter your name" />
-    <input @bind="_newMessage" placeholder="Enter your message" @onkeypress="SendOnEnter" />
-    <button @onclick="SendMessage" disabled="@(!IsConnected)">Send</button>
-</div>
-
-<div style="margin-top: 20px;">
-    <h4>Messages:</h4>
-    <ul>
-        @foreach (var message in _Messages)
-        {
-            <li>@message</li>
-        }
-    </ul>
-</div>
- *@
-
-
-
-<!-- ................. -->
-@if (!_isChatting)
+@if(_isWaitingText == true)
 {
-    <div class="alert alert-secondary mt-4" role="alert">
-        <span class="oi oi-person mr-2" aria-hidden="true"></span>
-        <input type="hidden" maxlength="32" @bind="@_UserName" />
-        <span>Click the button to Connect ==> </span>
-@*         <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
- *@        <button type="button ml-md-auto" @onclick="@Chat"><span class="oi oi-chat" aria-hidden="true"></span> Chat!</button>
-    </div>
-
-
-    // Error messages
-    @if (_message != null)
-    {
-        <div class="invalid-feedback">@_message</div>
-        <small id="emailHelp" class="form-text text-muted">@_message</small>
-    }
+    <div><p><em>Select a user to chat...</em></p></div>
+}
+else if(_isLoaded == false){ <p>Chat is loading...</p>
 }
 else
 {
-    // banner to show current user
-    <div class="alert alert-secondary mt-4" role="alert">
-        <span class="oi oi-person mr-2" aria-hidden="true"></span>
-        <span>You are connected as <b>@_displayNameUser</b></span>
-        <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
-    </div>
+    
+    <h3>Chat: @_displayNameReciever</h3>
+    <!-- ................. -->
+    @if (!_isChatting)
+    {
+        <div class="alert alert-secondary mt-4" role="alert">
+            <span class="oi oi-person mr-2" aria-hidden="true"></span>
+            @* <input type="hidden" maxlength="32" @bind="@_UserName" /> *@
+            <span>Click the button to Connect ==> </span>
+            <button type="button ml-md-auto" @onclick="@Chat"><span class="oi oi-chat" aria-hidden="true"></span> Chat!</button>
+        </div>
 
-@*     <h2>Connected users:</h2>
-    <ul>
-        @foreach (var user in _connectedNames)
+
+        // Error messages
+        @if (_message != null)
         {
-            <li>@user</li>
+            <div class="invalid-feedback">@_message</div>
+            <small id="emailHelp" class="form-text text-muted">@_message</small>
         }
-    </ul> *@
+    }
+    else
+    {
+        // banner to show current user
+@*         <div class="alert alert-secondary mt-4" role="alert">
+            <span class="oi oi-person mr-2" aria-hidden="true"></span>
+            <span>You are connected as <b>@_displayNameUser</b></span>
+            <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
+        </div> *@
 
-    // display messages
-    <div id="scrollbox">
-        <div>
 
-        @foreach (var item in _ArchiveMessages)
-        {
-            @try
+
+        // display messages
+        <div id="scrollbox">
+            <div>
+
+            @foreach (var item in _ArchiveMessages)
+            {
+                @try
+                {
+                    @if (item.IsNotice)
+                    {
+                        <div class="alert alert-info">@item.Body</div>
+                    }
+                    else
+                    {
+                        <div class="@item.CSS">
+                            <div class="user">@item.timestamp</div>
+                            <div class="user">(A) From: @item.fullNameUser</div>
+                            @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
+                            {
+                                <div class="user">To: @item.fullNameReciever</div>
+                            }
+                            <div class="msg">@item.Body</div>
+                        </div>
+                    }
+                }
+                catch(Exception e)
+                {
+                    <div class="@item.CSS">
+                        <div class="msg">
+                            @e
+                        </div>
+                    </div>
+                }
+            }
+
+
+
+            @foreach (var item in _Messages)
             {
                 @if (item.IsNotice)
                 {
@@ -91,7 +107,8 @@ else
                 {
                     <div class="@item.CSS">
                         <div class="user">@item.timestamp</div>
-                        <div class="user">(A) From: @item.fullNameUser</div>
+                        <div class="user">From: @item.fullNameUser</div>
+
                         @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
                         {
                             <div class="user">To: @item.fullNameReciever</div>
@@ -100,72 +117,36 @@ else
                     </div>
                 }
             }
-            catch(Exception e)
-            {
-                <div class="@item.CSS">
-                    <div class="msg">
-                        @e
-                    </div>
-                </div>
-            }
-        }
-
-
-
-        @foreach (var item in _Messages)
-        {
-            @if (item.IsNotice)
-            {
-                <div class="alert alert-info">@item.Body</div>
-            }
-            else
-            {
-                <div class="@item.CSS">
-                    <div class="user">@item.timestamp</div>
-                    <div class="user">From: @item.fullNameUser</div>
-
-                    @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
-                    {
-                        <div class="user">To: @item.fullNameReciever</div>
-                    }
-                    <div class="msg">@item.Body</div>
-                </div>
-            }
-        }
 
 
 
 
-        </div>
-
-        <!-- ____________________________________________________ -->
-        <hr />
-        <div>
-            <div id="sentto">
-                <label for="recipientUsername">Send message to:</label>
-                <input type="hidden" id="recipientUsername" @bind="_recipientUsername" />
             </div>
-            <textarea class="input-lg" placeholder="enter your comment" @bind="@_newMessage"></textarea>
+
+            <!-- ____________________________________________________ -->
+            <hr />
+            <div>
+                <div id="sentto">
+                    <label for="recipientUsername">Send message to:</label>
+                    <input type="hidden" id="recipientUsername" @bind="_recipientUsername" />
+                </div>
+                <textarea class="input-lg" placeholder="enter your comment" @bind="@_newMessage"></textarea>
         
-            @* Breakpoints  can be placed here! 
-                |
-                V   *@
-            <button class="btn btn-default" @onclick="@(() => SendAsync(_newMessage))">Send</button>
+                @* Breakpoints  can be placed here! 
+                    |
+                    V   *@
+                <button class="btn btn-default" @onclick="@(() => SendAsync(_newMessage))">Send</button>
+            </div>
+
+    
         </div>
 
-        <div class="alert alert-secondary mt-4" role="alert">
-            <span class="oi oi-person mr-2" aria-hidden="true"></span>
-            <span>You are connected as <b>@_displayNameUser</b></span>
-            <button class="btn btn-sm btn-warning ml-md-auto" @onclick="@DisconnectAsync">Disconnect</button>
-        </div>
-    
-    </div>
+
+    }
+
 
 
 }
-
-
-
 
 @code {
     /// <summary>
@@ -251,6 +232,7 @@ else
 
     private List<midMessage> _ArchiveMessages = new();
 
+    private bool _isLoaded = false;
 
     // list of Users in chat
     private List<string> _connectedUsers = new List<string>(); //NOTE: it might be worth checking the Type of this list later
@@ -259,11 +241,6 @@ else
     private HubConnection? _hubConnection;
     private string _hubUrl;
 
-    // protected override async Task OnInitializedAsync()
-    // {
-
-
-    // }
 
     public async Task<List<string?>> getUserNamesAsync(List<string> users)
     {
@@ -298,57 +275,130 @@ else
 
 
 
-
+    private bool _isWaitingText = false;
 
     /// <summary>
     /// Implement optional parameters
     /// 
     /// https://www.c-sharpcorner.com/article/parameters-in-blazor-server-deep-dive/
     /// </summary>
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
+        _isLoaded = false;
+        await CloseAndClear();
 
-        if (!string.IsNullOrWhiteSpace(Recipient))
+        bool same = true;
+        if (CourseId != _CourseId) same = false;
+
+        await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+
+        if (!same) {
+            _isWaitingText = true;
+        }
+        else
         {
-            _recipientUsername = Recipient.Trim();
+            await ConnectAndLoad();
+            _isLoaded = true;
+            _isWaitingText = false;
+        }
+    }
+
+    /// <summary>
+    /// close the connection and unload the lists of messages, names, and connected users
+    /// </summary>
+    /// <returns></returns>
+    private async Task CloseAndClear()
+    {
+        // close the connection
+        await DisconnectAsync();
+
+        // unload the lists of messages
+        _Messages.Clear();
+        _ArchiveMessages.Clear();
+        _connectedNames.Clear();
+        _connectedUsers.Clear();
+    }
+
+    /// <summary>
+    /// set up a new connection and listeners, then load messages
+    /// </summary>
+    /// <returns></returns>
+    private async Task ConnectAndLoad()
+    {
+        await Chat();
+        await LoadArchivedMessages();
+    }
+
+
+    /// <summary>
+    /// For use with:
+    ///  <code>
+    ///   await Task.Run(() => SetChatParameters(user, recipient, courseId));
+    /// </code>
+    /// </summary>
+    /// <param name="user">User</param>
+    /// <param name="recipient">Recipient</param>
+    /// <param name="courseId">CourseId</param>
+    private void SetChatParameters(string user, string recipient, int courseId)
+    {
+        if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
+        {
+            _recipientUsername = recipient.Trim();
             _displayNameReciever = getFullName(_recipientUsername);
         }
-        if (!string.IsNullOrWhiteSpace(User))
+        if (!string.IsNullOrWhiteSpace(user))
         {
             _UserName = User?.Trim();
             _displayNameUser = getFullName(_UserName);
             // _displayNameUser = _UserName;
         }
-        if (_CourseId == null)
+        if (courseId != 0)
         {
-            _CourseId = CourseId;
+            _CourseId = courseId;
         }
+    }
 
-
+    private void SetChatParameters(int courseId)
+    {
+        if (courseId != 0)
+        {
+            _CourseId = courseId;
+        }
 
     }
 
+    private void SetChatParameters(string user, string recipient)
+    {
+        if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
+        {
+            _recipientUsername = recipient.Trim();
+            _displayNameReciever = getFullName(_recipientUsername);
+        }
+        if (!string.IsNullOrWhiteSpace(user))
+        {
+            _UserName = User?.Trim();
+            _displayNameUser = getFullName(_UserName);
+        }
+    }
+
+
+    //private string? _courseCheck;
+
+    private bool _isFirstLoad = true;
 
     protected override async Task OnInitializedAsync()
     {
+        _isLoaded = false;
         // alternatively: create a method that Messaging will call when navigating to other users
         await DisconnectAsync();
-        if (!string.IsNullOrWhiteSpace(Recipient))
-        {
-            _recipientUsername = Recipient.Trim();
+        await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
 
-        }
-        if (!string.IsNullOrWhiteSpace(User))
-        {
-            _UserName = User?.Trim();
-        }
-        if (_CourseId == null)
-        {
-            _CourseId = CourseId;
-        }
         await Chat();
 
         await LoadArchivedMessages();
+
+        _isLoaded = true;
+        _isFirstLoad = false;
     }
 
     private async Task LoadArchivedMessages()
@@ -378,16 +428,14 @@ else
 
 
 
-
+    /// <summary>
+    /// creates the chat client and connection, sets up event handlers,
+    ///  //starts the connection, and sends a message to connected users
+    ///  //that the client has connected.
+    /// </summary>
+    /// <returns></returns>
     private async Task Chat()
     {
-        // initialize the private fields from the parameters
-        _UserName = User?.Trim();
-        _recipientUsername = Recipient?.Trim();
-        _CourseId = CourseId;
-        //_displayNameUser = getFullName(_UserName);
-
-
 
         if (string.IsNullOrWhiteSpace(_UserName))
         {
@@ -396,16 +444,12 @@ else
         }
 
         try {
-            //await OnInitializedAsync();
-
-            // check username is valid
-
             // Start chatting and force refresh UI, ref: https://github.com/dotnet/aspnetcore/issues/22159
             _isChatting = true;
             await Task.Delay(3);
 
             // remove old messages if any
-            _Messages.Clear();
+            // _Messages.Clear();
 
             // Create the chat client
             string baseUrl = navigationManager.BaseUri;
@@ -422,25 +466,25 @@ else
 
             _hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(15);
 
-            /*
-            *
-            *   // Listen to incoming messages, uses an inline lambda method to process messages
-            *   _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
-            *   {
-                *       var encodedMsg = $"{user}: {message}";
-                *       _Messages.Add($"{user}: {message}");
-                *       InvokeAsync(StateHasChanged);
-                *   });
-            */
+            @*
+                // Listen to incoming messages, uses an inline lambda method to process messages
+                _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+                {
+                    var encodedMsg = $"{user}: {message}";
+                    _Messages.Add($"{user}: {message}");
+                    InvokeAsync(StateHasChanged);
+                });
+           
+            *@
 
-                                    // Define event handlers for SignalR events
-                                    _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
+            // Define event handlers for SignalR events
+            _hubConnection.On<string, string, int>("Broadcast", BroadcastMessage); // sends to all clients
             _hubConnection.On<string, string, string, int>("RecieveFromUser", RecieveFromUser) ; // sends to specific user
             _hubConnection.On<IEnumerable<string>>("UpdateConnectedUsers", async (userList) =>
                 {
                     _connectedUsers = userList.ToList();
                     //_connectedNames = messagePageManager.GetFullNameFromUserIdList(_connectedUsers); 
-                    InvokeAsync(StateHasChanged);
+                    await InvokeAsync(StateHasChanged);
                 });
 
             // Start the connection
