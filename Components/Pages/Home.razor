@@ -27,7 +27,7 @@
                 <h1>Join a Course!</h1>
                 <form>
                     <label>Course Code:</label>
-                    <input placeholder="Ex. CSCI, HIST, etc." type="text" id="CouseCode" @bind-value="CourseCode" />
+                    <input placeholder="Ex. CSCI, HIST, etc." type="text" id="CourseCode" @bind-value="CourseCode" />
                     <label>Course Number:</label>
                     <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum" />
                     <label>Section Number:</label>
@@ -52,7 +52,7 @@
            <h1>Create a Course!</h1>
            <form>
                <label>Course Code:</label>
-               <input placeholder="Ex. CSCI, HIST, etc."type="text" id="CouseCode" @bind-value="CourseCode" />
+               <input placeholder="Ex. CSCI, HIST, etc."type="text" id="CourseCode" @bind-value="CourseCode" />
                <label>Course Number:</label>
                <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum"/>
                <label>Section Number:</label>
@@ -66,9 +66,10 @@
             Please Login or Register:
         </div>
     </NotAuthorized>
-</AuthorizeView>
+    </AuthorizeView>
 
 <style>
+
     .alerts{
         border: solid;
         text-align: center;
