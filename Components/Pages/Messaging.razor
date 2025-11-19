@@ -112,11 +112,6 @@
     string? userName = string.Empty;
     string? recipientId = string.Empty;
 
-    // set to student1@etsu.edu , Pass123!
-    string? testRecipientId = "a340066d-ebd9-49cb-9cbc-e60c50393ddc";
-    //private int _CourseId;
-    private int testCourseId = 1;
-
     private UserDTO? _selectedRecipient;
     private Course? _selectedCourse;
     private int _selectedCourseId = 0;
@@ -136,10 +131,11 @@
 
             if (!string.IsNullOrEmpty(userId))
             {
-                var courseGetter = MPS.GetCoursesByUserIdAsync(userId);
-                await Task.WhenAll(courseGetter);
+                var courseGetter = await MPS.GetCoursesByUserIdAsync(userId);
+                //await Task.WhenAll(courseGetter);
 
-                Courses = courseGetter.Result.ToList();
+                //Courses = courseGetter.Result.ToList();
+                Courses = courseGetter.ToList();
 
 
             }
@@ -166,6 +162,8 @@
             {
                 userDTOs.Clear();
             }
+            _selectedRecipient = null;
+            recipientId = string.Empty;
         }
 
         //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
