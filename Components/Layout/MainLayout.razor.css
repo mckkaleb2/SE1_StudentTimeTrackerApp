@@ -9,7 +9,7 @@ main {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: linear-gradient(180deg, #052767 0%, #3a0647 70%);
 }
 
 .top-row {
@@ -48,8 +48,8 @@ main {
     }
     
     .top-row ::deep a.active {
-        background-color: #f7fe22;
-        color: rgb(37, 6, 71);
+        background-color: #20165c;
+        color: #f4f143d7;
         border-radius: 4px;
         padding-top: 1rem;
         padding-bottom: 1rem;
@@ -58,8 +58,8 @@ main {
     }
     
     .top-row ::deep .buttons:hover {
-        background-color: #f7fe22;
-        color: rgb(37, 6, 71);
+        background-color: #20165c;
+        color: #f4f143d7;
         padding-left: 0;
 
     }
