@@ -1,4 +1,4 @@
-@page "/"
+﻿@page "/"
 @using System.Security.Claims
 @inject StudentTimeTrackerApp.Services.StudentService StudentService
 @inject StudentTimeTrackerApp.Services.InstructorService InstructorService
@@ -149,6 +149,42 @@
         </div>
     </NotAuthorized>
     </AuthorizeView>
+
+<style>
+    .alerts{
+        border: solid;
+        text-align: center;
+    }
+
+    .login{
+        margin: auto;    
+        border: solid;
+        text-align: center;
+        justify-content: flex-end;
+        width: fit-content;
+        margin-top: 15%;
+        margin-bottom: 20%;
+        padding: 5%;
+        background-color: white;
+        font-size: x-large;
+        color: black;
+        border-radius: 10px;
+        border-color: blue;
+    }
+
+    .login .loginButton{
+        background-color: blue;
+        color: yellow;
+        border-radius: 10px;
+        font-size: large;
+
+    }
+
+    .login .registerButton{
+        font-size: medium;
+    }
+</style>
+
 
 @code {
     private bool IsStudent = false;

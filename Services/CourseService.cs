@@ -100,24 +100,14 @@ public class CourseService
         }
 
 
-        var match = _context.Courses
-            .FirstOrDefault(c =>
-            c.CourseCode == courseCode &&
-            c.CourseNum == courseNum &&
-            c.SectionNum == sectionNum);
 
-        if (match == null)
-        {
-            errorMessage = "No course was found. Please try again.";
-            return errorMessage;
-        }
-
-        /// <summary>
-        /// Finds the Course By the Id number
-        /// </summary>
-        /// <param name="courseId">The Id of the Course object.</param>
-        /// <returns>The Course object.</returns>
-        public Course? GetCourseById(int courseId)
+    /// <summary>
+    /// Finds the Course By the Id number
+    /// </summary>
+    /// <param name="courseId">The Id of the Course object.</param>
+    /// <returns>The Course object.</returns>
+    public Course? GetCourseById(int courseId)
+    {
         student.Courses.Add(match);
         match.Students.Add(student);
         _context.SaveChanges();
@@ -176,8 +166,5 @@ public class CourseService
 
         return (List<Student>?)course.Students;
     }
-
-
-
 }
 

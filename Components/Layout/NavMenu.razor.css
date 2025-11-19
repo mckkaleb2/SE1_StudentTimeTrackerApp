@@ -21,9 +21,8 @@
 }
 
 .navbar-brand {
-    font-size: 1.1rem;
+    font-size: 1.1rem;        
     color: #f7fe22;
-    font-style: bold;
 
 }
 
@@ -44,6 +43,7 @@
 .nav-item {
     font-size: 0.9rem;
     padding-bottom: 0.5rem;
+    color: #f7fe22;
 }
 
     .nav-item:first-of-type {
