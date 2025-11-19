@@ -83,10 +83,16 @@ public class CourseService
             errorMessage = "No course was found. Please try again.";
             return errorMessage;
         }
-
-        student.Courses.Add(match);
-        match.Students.Add(student);
-        _context.SaveChanges();
+        try
+        {
+            student.Courses.Add(match);
+            match.Students.Add(student);
+            _context.SaveChanges();
+        } catch
+        {
+            errorMessage = "You are already enrolled in this course.";
+            return errorMessage;
+        }
         return errorMessage;
     }
 
@@ -142,8 +148,5 @@ public class CourseService
 
         return (List<Student>?)course.Students;
     }
-
-
-
 }
 

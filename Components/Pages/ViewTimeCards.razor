@@ -16,12 +16,15 @@
 
 <h3>ViewTimeCards</h3>
 
-<select class="form-select" @onchange="OnCourseChanged">
-    @foreach(var course in Courses)
-    {
-        <option value="@course.Id">@course.CourseCode-@course.CourseNum-@course.SectionNum</option>
-    }
-</select>
+<div class="d-flex align-items-center gap-2 my-3">
+    <label for="courseSelect" class="form-label mb-0">Select Course:</label>
+    <select id="courseSelect" class="form-select w-auto" @onchange="OnCourseChanged">
+        @foreach (var course in Courses)
+        {
+            <option value="@course.Id">@course.CourseCode-@course.CourseNum-@course.SectionNum</option>
+        }
+    </select>
+</div>
 
 @if(selectedCourseId != 0)
 {
