@@ -111,9 +111,15 @@ else
 
                         @if (!string.IsNullOrWhiteSpace(item.RecieverUsername))
                         {
-                            <div class="user">To: @item.fullNameReciever</div>
+                              <div class="user">To: @item.fullNameReciever</div>
                         }
-                        <div class="msg">@item.Body</div>
+@*                         else
+                        {
+                            <div class="user">To: @_recipientDisplayName</div>
+
+                        } *@
+
+                            <div class="msg">@item.Body</div>
                     </div>
                 }
             }
@@ -248,6 +254,7 @@ else
         foreach (var user in users)
         {
             await getFullNameAsync(user);
+            await Task.Delay(2);
         }
         return output;
     }
@@ -284,22 +291,27 @@ else
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        _isLoaded = false;
-        await CloseAndClear();
-
-        bool same = true;
-        if (CourseId != _CourseId) same = false;
-
-        await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
-
-        if (!same) {
-            _isWaitingText = true;
-        }
-        else
+        if (!_isFirstLoad)
         {
-            await ConnectAndLoad();
-            _isLoaded = true;
-            _isWaitingText = false;
+            _isLoaded = false;
+            await CloseAndClear();
+
+            bool same = true;
+            if (CourseId != _CourseId) same = false;
+
+            await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+
+            if (!same) {
+                _isWaitingText = true;
+            }
+            else
+            {
+                await ConnectAndLoad();
+                _isLoaded = true;
+                _isWaitingText = false;
+            }
+
+
         }
     }
 
@@ -325,6 +337,16 @@ else
     /// <returns></returns>
     private async Task ConnectAndLoad()
     {
+
+
+        // get full name using _UserName
+        // if _recipientUserName != GROUP
+        // get full name of recipient
+        // set a local recipient full name
+        // when messages
+
+
+
         await Chat();
         await LoadArchivedMessages();
     }
@@ -344,8 +366,17 @@ else
         if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
         {
             _recipientUsername = recipient.Trim();
-            _displayNameReciever = getFullName(_recipientUsername);
+            _recipientUsername = recipient.Trim();
+            if (_recipientUsername != "GROUP")
+            {
+                _displayNameReciever = getFullName(_recipientUsername);
+            }
+            else
+            {
+                _displayNameReciever = $"GROUP";
+            }
         }
+
         if (!string.IsNullOrWhiteSpace(user))
         {
             _UserName = User?.Trim();
@@ -372,7 +403,14 @@ else
         if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
         {
             _recipientUsername = recipient.Trim();
-            _displayNameReciever = getFullName(_recipientUsername);
+            if (_recipientUsername != "GROUP")
+            {
+                _displayNameReciever = getFullName(_recipientUsername);
+            }
+            else
+            {
+                _displayNameReciever = $"GROUP";
+            }
         }
         if (!string.IsNullOrWhiteSpace(user))
         {
@@ -401,6 +439,10 @@ else
         _isFirstLoad = false;
     }
 
+
+    private string? _userDisplayName;
+    private string? _recipientDisplayName;
+
     private async Task LoadArchivedMessages()
     {
         ICollection<Message> messages = await messagePageManager.GetMessagesBetweenUsersInCourseAsync(_UserName, _recipientUsername, _CourseId);
@@ -410,12 +452,29 @@ else
             bool isMine = m.Sender.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage formattedMessage = new midMessage(m.Sender, m.Body, isMine, m.CourseId);
             formattedMessage.timestamp = $"{m.Timestamp}";
-            var fnUser = getFullNameAsync(m.Sender);
-            var fnReciever = getFullNameAsync(_recipientUsername);
-            await Task.WhenAll(fnUser, fnReciever);
 
-            formattedMessage.fullNameUser = fnUser.Result;
-            formattedMessage.fullNameReciever = fnReciever.Result;
+            var fnUser = string.Empty;
+            var fnReciever = string.Empty;
+
+            if(_recipientUsername == "GROUP")
+            {
+                fnUser = await getFullNameAsync(m.Sender);
+                await Task.Delay(3);
+                fnReciever = await getFullNameAsync(_recipientUsername);                
+            }
+            else
+            {
+                fnUser = await getFullNameAsync(m.Sender);
+
+                //fnUser = _displayNameUser;
+                fnReciever = _displayNameReciever;
+            }
+            //await Task.WhenAll(fnUser, fnReciever);
+
+            //formattedMessage.fullNameUser = fnUser.Result;
+            formattedMessage.fullNameUser = fnUser;
+            //formattedMessage.fullNameReciever = fnReciever.Result;
+            formattedMessage.fullNameReciever = fnReciever;
 
             _ArchiveMessages.Add(formattedMessage);
         }
@@ -492,7 +551,7 @@ else
             // Notify others of new user
             
             _displayNameUser = await getFullNameAsync(_UserName);
-
+            await Task.Delay(2);
             await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
 
         }
@@ -520,8 +579,8 @@ else
         middleMessage.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
 
         middleMessage.fullNameUser = await getFullNameAsync(name);
+        await Task.Delay(3);
         middleMessage.fullNameReciever = await getFullNameAsync(_UserName);
-
 
         _Messages.Add(middleMessage);
         // Inform blazor the UI needs updating
@@ -541,8 +600,19 @@ else
         bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
         var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
         messageObj.RecieverUsername = recieverUsername;
-        messageObj.fullNameUser = await getFullNameAsync(senderUsername);
-        messageObj.fullNameReciever = await getFullNameAsync(recieverUsername);
+
+        if (_recipientUsername == "GROUP")
+        {
+            messageObj.fullNameReciever = await getFullNameAsync(senderUsername);
+            await Task.Delay(3);
+            messageObj.fullNameUser = await getFullNameAsync(recieverUsername);
+        }
+        else
+        {
+            messageObj.fullNameReciever = _displayNameUser;
+            messageObj.fullNameUser = _displayNameReciever;
+        }
+
         messageObj.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
 
         
@@ -559,7 +629,7 @@ else
     {
         if (_isChatting)
         {
-            await SendAsync($"[Notice] {_UserName} left chat room.");
+            await SendAsync($"[Notice] {_displayNameUser} left chat room.");
 
             await _hubConnection.StopAsync();
             await DisposeAsync();
@@ -603,9 +673,21 @@ else
 
             bool isMine = _UserName.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage m = new midMessage(_UserName, message, isMine, _CourseId);
-            m.fullNameUser = await getFullNameAsync(_UserName);
-            m.fullNameReciever = await getFullNameAsync(_recipientUsername);
+            
 
+            if (_recipientUsername == "GROUP")
+            {
+                m.fullNameUser = await getFullNameAsync(_UserName);
+                await Task.Delay(3);
+                m.fullNameReciever = await getFullNameAsync(_recipientUsername);
+            }
+            else
+            {
+                m.fullNameUser = _displayNameUser;
+                m.fullNameReciever = _displayNameReciever;
+            }
+
+            
             _Messages.Add(m);
             if (!m.IsNotice) // as long as a message isn't a notice, add it to the database
             {
