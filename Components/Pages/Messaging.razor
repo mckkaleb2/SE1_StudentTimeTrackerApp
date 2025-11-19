@@ -38,10 +38,32 @@
         
         @if(!(_selectedCourseId == 0)) //if there is a selected course, do the following
         {
-            if (userDTOs == null) { <p>userDTOs is null</p>}
-            else if (userDTOs != null && userDTOs.Count() <= 1) { <p>There's no one else in the class!</p>}
+
+            <ul class="users">
+
+                <li @onclick="(() => OnGroupClicked())"
+                    style="cursor: pointer;">
+                    @if (recipientId == "GROUP")
+                    {
+                        <a style="background-color:gold">@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                    else
+                    {
+                        <a>@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                </li>
+
+
+
+            @if (userDTOs == null)
+            {
+                <li><em>userDTOs is null</em></li>
+            }
+            else if (userDTOs != null && userDTOs.Count() <= 1)
+            {
+                <li><em>There's no one else in the class!</em></li>
+            }
             else if(userDTOs != null && userDTOs.Count() != 0){
-                <ul class="users">
                     @foreach(UserDTO user in userDTOs)
                     {
                         @if(user.UserId != userId)
@@ -61,8 +83,8 @@
 
                     }
                     <!-- foreach users in CLASS add li object? -->
-                </ul>
             }
+            </ul>
         }
         else
         {
@@ -77,7 +99,7 @@
         @{
             if (_selectedCourse != null &&
                 _selectedCourseId != 0 &&
-                _selectedRecipient != null &&
+                //_selectedRecipient != null &&
                 recipientId != null &&
                 !string.IsNullOrWhiteSpace(recipientId)
             )
@@ -183,6 +205,16 @@
         //     selectedFruits.Remove(fruit);
         // }
     }
+
+
+    private void OnGroupClicked()
+    {
+        _selectedRecipient = null;
+        recipientId = "GROUP";
+
+        StateHasChanged();
+    }
+
 
 
 }

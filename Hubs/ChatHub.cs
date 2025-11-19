@@ -55,7 +55,7 @@ namespace StudentTimeTrackerApp.Hubs
         /// <returns></returns>
         public async Task Broadcast(string username, string recipient, string message, int courseId)
         {
-            if (string.IsNullOrWhiteSpace(recipient)) // changed from .IsNullOrEmpty
+            if (string.IsNullOrWhiteSpace(recipient) || recipient == "GROUP") // changed from .IsNullOrEmpty
             {
                 await Clients.All.SendAsync("Broadcast", username, message, courseId);
             }

@@ -287,6 +287,14 @@ namespace StudentTimeTrackerApp.Services
 
                 //Email = email;
             }
+            else if (ins == null && null == stu)
+            {
+                userOut.UserId = "GROUP";
+                userOut.FirstName = "GROUP";
+                userOut.LastName = "CHAT";
+                
+            }
+                    
             else
             {
                 throw new NotImplementedException("User not found from ID");
@@ -461,6 +469,7 @@ namespace StudentTimeTrackerApp.Services
             var message = new Message
             {
                 Sender = senderId,
+                //Recipient = recipientId ?? "GROUP",
                 Recipient = recipientId ?? string.Empty,
                 CourseId = courseId,
                 Body = body,

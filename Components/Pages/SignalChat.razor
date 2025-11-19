@@ -299,7 +299,9 @@ else
             bool same = true;
             if (CourseId != _CourseId) same = false;
 
-            await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+            //await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+            await SetChatParametersAsync(User, Recipient, CourseId);
+
 
             if (!same) {
                 _isWaitingText = true;
@@ -377,7 +379,7 @@ else
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(user))
+        if ((!string.IsNullOrWhiteSpace(user)) || user?.Trim() != _UserName)
         {
             _UserName = User?.Trim();
             _displayNameUser = getFullName(_UserName);
@@ -388,6 +390,37 @@ else
             _CourseId = courseId;
         }
     }
+
+
+    private async Task SetChatParametersAsync(string user, string recipient, int courseId)
+    {
+        if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
+        {
+            _recipientUsername = recipient.Trim();
+            _recipientUsername = recipient.Trim();
+            if (_recipientUsername != "GROUP")
+            {
+                _displayNameReciever = await getFullNameAsync(_recipientUsername);
+            }
+            else
+            {
+                _displayNameReciever = $"GROUP";
+            }
+        }
+
+        if ((!string.IsNullOrWhiteSpace(user)) || user?.Trim() != _UserName)
+        {
+            _UserName = User?.Trim();
+            _displayNameUser = getFullName(_UserName);
+            // _displayNameUser = _UserName;
+        }
+        if (courseId != 0)
+        {
+            _CourseId = courseId;
+        }
+    }
+
+
 
     private void SetChatParameters(int courseId)
     {
@@ -418,6 +451,28 @@ else
             _displayNameUser = getFullName(_UserName);
         }
     }
+
+    private async Task SetChatParametersAsync(string user, string recipient)
+    {
+        if (!string.IsNullOrWhiteSpace(recipient)) //if implemented, perhaps a group chat would have "GROUP" as an Id, passed in from Messaging
+        {
+            _recipientUsername = recipient.Trim();
+            if (_recipientUsername != "GROUP")
+            {
+                _displayNameReciever = await getFullNameAsync(_recipientUsername);
+            }
+            else
+            {
+                _displayNameReciever = $"GROUP";
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(user))
+        {
+            _UserName = User?.Trim();
+            _displayNameUser = getFullName(_UserName);
+        }
+    }
+
 
 
     //private string? _courseCheck;
@@ -679,7 +734,8 @@ else
             {
                 m.fullNameUser = await getFullNameAsync(_UserName);
                 await Task.Delay(3);
-                m.fullNameReciever = await getFullNameAsync(_recipientUsername);
+                //m.fullNameReciever = await getFullNameAsync(_recipientUsername);
+                m.fullNameReciever = _displayNameReciever;
             }
             else
             {
