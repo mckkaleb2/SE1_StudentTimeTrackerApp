@@ -1,5 +1,6 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-image: linear-gradient(to top, rgba(254, 227, 148, 1), white);
 }
 
 a, .btn-link {

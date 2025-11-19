@@ -32,42 +32,70 @@ public class CourseService
 
         if (instructor == null)
         {
-            errorMessage = "Instructor was not found. Please try again.";
+            string errorMessage = string.Empty;
+            var instructor = _context.Instructors
+                .FirstOrDefault(i => i.UserId == userId);
+
+            if (instructor == null) {
+                errorMessage = "Instructor was not found. Please try again.";
+                return errorMessage;
+            }
+            if (string.IsNullOrEmpty(courseCode) || courseNum <= 0 || sectionNum <= 0) {
+                errorMessage = "Please fill out all fields correctly.";
+                return errorMessage;
+            }
+            var course = new Course
+            {
+                
+                CourseCode = courseCode,
+                CourseNum = courseNum,
+                SectionNum = sectionNum,
+            };
+
+            course.Instructors.Add(instructor);
+            try
+            {
+                _context.Courses.Add(course);
+                _context.SaveChanges();
+            } catch
+            {
+                errorMessage = "A course with that code, number, and section already exists.";
+            }
             return errorMessage;
         }
 
         var course = new Course
         {
+            string errorMessage = string.Empty;
+            var student = _context.Students
+                .FirstOrDefault(s => s.UserID == userId);
 
-            CourseCode = courseCode,
-            CourseNum = courseNum,
-            SectionNum = sectionNum,
-        };
+            if (student == null) {
+                errorMessage = "No student found. Please try again.";
+                return errorMessage;
+            }
 
-        course.Instructors.Add(instructor);
 
-        _context.Courses.Add(course);
-        _context.SaveChanges();
-        return errorMessage;
-    }
+            var match = _context.Courses
+                .FirstOrDefault(c =>
+                c.CourseCode == courseCode &&
+                c.CourseNum == courseNum &&
+                c.SectionNum == sectionNum);
 
-    /// <summary>
-    /// Finds and Adds a Student to a Course object. 
-    /// </summary>
-    /// <param name="userId">The Id of the currently logged in user.</param>
-    /// <param name="courseCode">The code for the Course object (i.e., CSCI, HIST, etc.)</param>
-    /// <param name="courseNum">The number of the Course object (i.e., 1120, 4250, etc.)</param>
-    /// <param name="sectionNum">The section number of the Course object.</param>
-    /// <returns>The error message, if there is one.</returns>
-    public string FindCourse(string userId, string courseCode, int courseNum, int sectionNum)
-    {
-        string errorMessage = string.Empty;
-        var student = _context.Students
-            .FirstOrDefault(s => s.UserID == userId);
-
-        if (student == null)
-        {
-            errorMessage = "No student found. Please try again.";
+            if (match == null)
+            {
+                errorMessage = "No course was found. Please try again.";
+                return errorMessage;
+            }
+            try
+            {
+                student.Courses.Add(match);
+                match.Students.Add(student);
+                _context.SaveChanges();
+            } catch
+            {
+                errorMessage = "You are already enrolled in this course.";
+            }
             return errorMessage;
         }
 
@@ -84,6 +112,12 @@ public class CourseService
             return errorMessage;
         }
 
+        /// <summary>
+        /// Finds the Course By the Id number
+        /// </summary>
+        /// <param name="courseId">The Id of the Course object.</param>
+        /// <returns>The Course object.</returns>
+        public Course? GetCourseById(int courseId)
         student.Courses.Add(match);
         match.Students.Add(student);
         _context.SaveChanges();

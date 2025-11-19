@@ -1,5 +1,5 @@
-﻿@page "/"
-@using System.Security.Claims   
+@page "/"
+@using System.Security.Claims
 @inject StudentTimeTrackerApp.Services.StudentService StudentService
 @inject StudentTimeTrackerApp.Services.InstructorService InstructorService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
@@ -9,12 +9,9 @@
 
 <AuthorizeView>
     <Authorized>
-        @if (IsStudent) {
+        @if (IsStudent)
+        {
             <div class="timeclock">
-                @if(isWorking == false)
-                {
-                    @errorMessage
-                }
                 <br />
                 <br />
                 <br />
@@ -22,41 +19,114 @@
                 <br />
                 <br />
                 <br />
-                <h1>Join a Course!</h1>
-                <form>
-                    <label>Course Code:</label>
-                    <input placeholder="Ex. CSCI, HIST, etc." type="text" id="CouseCode" @bind-value="CourseCode" />
-                    <label>Course Number:</label>
-                    <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum" />
-                    <label>Section Number:</label>
-                    <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum" />
-                </form>
-                <button class="btn btn-success" @onclick="() => CallFindCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
+                @if (isWorking == false)
+                {
+                    <div class="alert alert-danger mx-auto my-4" style="max-width: 600px;" role="alert">
+                        @errorMessage
+                    </div>
                 }
+                @if (success == true)
+                {
+                    <div class="alert alert-success mx-auto my-4" style="max-width: 600px;" role="alert">
+                        Successfully joined the course!
+                    </div>
+                }
+                <h1 class="text-center my-4">Join a Course!</h1>
+
+                <div class="d-flex justify-content-center">
+                    <div class="card shadow-sm w-100" style="max-width: 600px;">
+                        <div class="card-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label" for="CouseCode">Course Code:</label>
+                                    <input class="form-control" placeholder="Ex. CSCI, HIST, etc." type="text"
+                                        id="CouseCode" @bind-value="CourseCode" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="CourseNum">Course Number:</label>
+                                    <input class="form-control" placeholder="Ex. 4250, 1120, 4417, etc." type="number"
+                                        id="CourseNum" @bind-value="CourseNum" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="SectionNum">Section Number:</label>
+                                    <input class="form-control" placeholder="Ex. 001, 002, etc." type="number"
+                                        id="SectionNum" @bind-value="SectionNum" />
+                                </div>
+                            </form>
+
+                            <div class="text-end">
+                                <button class="btn btn-success"
+                                    @onclick="() => CallFindCourse(newUserId, CourseCode, CourseNum, SectionNum)">
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-footer text-muted small text-end">
+                            Enter the correct course details to join.
+                        </div>
+                    </div>
+                </div>
 
             </div>
         }
-        @if (IsInstructor) {
+        @if (IsInstructor)
+        {
             @if (isWorking == false)
             {
-                <h1>@errorMessage</h1>
+                <div class="alert alert-danger mx-auto my-4" style="max-width: 600px;" role="alert">
+                    @errorMessage
+                </div>
             }
-            <br />
-            <br />
-            <br />
-            
-            <h1>Hi Instructor</h1>
+            @if (success == true)
+            {
+                <div class="alert alert-success mx-auto my-4" style="max-width: 600px;" role="alert">
+                    Successfully created the course!
+                </div>
+            }
 
-           <h1>Create a Course!</h1>
-           <form>
-               <label>Course Code:</label>
-               <input placeholder="Ex. CSCI, HIST, etc."type="text" id="CouseCode" @bind-value="CourseCode" />
-               <label>Course Number:</label>
-               <input placeholder="Ex. 4250, 1120, 4417, etc." type="number" id="CourseNum" @bind-value="CourseNum"/>
-               <label>Section Number:</label>
-               <input placeholder="Ex. 001, 002, etc." type="number" id="SectionNum" @bind-value="SectionNum"/>
-           </form>
-           <button class="btn btn-success" @onclick="() => CallCreateCourse(newUserId, CourseCode, CourseNum, SectionNum)">Submit</button>
+
+
+            <h1 class="text-center my-4">Create a Course!</h1>
+
+            <div class="d-flex justify-content-center">
+                <div class="card shadow-sm w-100" style="max-width: 600px;">
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label" for="CouseCode">Course Code:</label>
+                                <input class="form-control" placeholder="Ex. CSCI, HIST, etc." type="text" id="CouseCode"
+                                    @bind-value="CourseCode" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="CourseNum">Course Number:</label>
+                                <input class="form-control" placeholder="Ex. 4250, 1120, 4417, etc." type="number"
+                                    id="CourseNum" @bind-value="CourseNum" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="SectionNum">Section Number:</label>
+                                <input class="form-control" placeholder="Ex. 001, 002, etc." type="number" id="SectionNum"
+                                    @bind-value="SectionNum" />
+                            </div>
+                        </form>
+
+                        <div class="text-end">
+                            <button class="btn btn-success"
+                                @onclick="() => CallCreateCourse(newUserId, CourseCode, CourseNum, SectionNum)">
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-muted small text-end">
+                        All fields are required to create a course.
+                    </div>
+                </div>
+            </div>
         }
         <br />
         <br />
@@ -78,46 +148,7 @@
                 </div>
         </div>
     </NotAuthorized>
-</AuthorizeView>
-
-<style>
-    body{
-        background-image: linear-gradient(to top, rgba(254, 227, 148, 1), white);
-    }
-
-    .alerts{
-        border: solid;
-        text-align: center;
-    }
-
-    .login{
-        margin: auto;    
-        border: solid;
-        text-align: center;
-        justify-content: flex-end;
-        width: fit-content;
-        margin-top: 15%;
-        margin-bottom: 20%;
-        padding: 5%;
-        background-color: white;
-        font-size: x-large;
-        color: black;
-        border-radius: 10px;
-        border-color: blue;
-    }
-
-    .login .loginButton{
-        background-color: blue;
-        color: yellow;
-        border-radius: 10px;
-        font-size: large;
-
-    }
-
-    .login .registerButton{
-        font-size: medium;
-    }
-</style>
+    </AuthorizeView>
 
 @code {
     private bool IsStudent = false;
@@ -125,6 +156,7 @@
     private string newUserId = string.Empty;
     bool isWorking = true;
     string errorMessage = string.Empty;
+    bool success = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,6 +191,8 @@
         if (errorMessage != string.Empty)
         {
             isWorking = false;
+        } else {
+            success = true;
         }
     }
 
@@ -175,6 +209,8 @@
         if (errorMessage != string.Empty)
         {
             isWorking = false;
+        } else {
+            success = true;
         }
     }
 }
