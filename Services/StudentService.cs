@@ -34,11 +34,21 @@ namespace StudentTimeTrackerApp.Services
         }
         public async Task<Student?> GetStudentByUserIdAsync(string userId)
         {
-            var waiter = _context.Students
-                .Where(s => s.UserID == userId)
-                .FirstOrDefaultAsync();
-            await Task.WhenAll(waiter);
-            return waiter.Result;
+            //await Task.Delay(3);
+            try
+            {
+                var waiter = await _context.Students
+                    .Where(s => s.UserID == userId)
+                    .FirstOrDefaultAsync();
+                return waiter;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return null;
+            }
+            //await Task.WhenAll(waiter);
+            //return waiter.Result;
         }
 
         public bool UserIsStudent(string userId)
