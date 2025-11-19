@@ -34,7 +34,10 @@ namespace StudentTimeTrackerApp.Services
                 errorMessage = "Instructor was not found. Please try again.";
                 return errorMessage;
             }
-
+            if (string.IsNullOrEmpty(courseCode) || courseNum <= 0 || sectionNum <= 0) {
+                errorMessage = "Please fill out all fields correctly.";
+                return errorMessage;
+            }
             var course = new Course
             {
                 
@@ -44,9 +47,14 @@ namespace StudentTimeTrackerApp.Services
             };
 
             course.Instructors.Add(instructor);
-
-            _context.Courses.Add(course);
-            _context.SaveChanges();
+            try
+            {
+                _context.Courses.Add(course);
+                _context.SaveChanges();
+            } catch
+            {
+                errorMessage = "A course with that code, number, and section already exists.";
+            }
             return errorMessage;
         }
 
@@ -81,10 +89,15 @@ namespace StudentTimeTrackerApp.Services
                 errorMessage = "No course was found. Please try again.";
                 return errorMessage;
             }
-
-            student.Courses.Add(match);
-            match.Students.Add(student);
-            _context.SaveChanges();
+            try
+            {
+                student.Courses.Add(match);
+                match.Students.Add(student);
+                _context.SaveChanges();
+            } catch
+            {
+                errorMessage = "You are already enrolled in this course.";
+            }
             return errorMessage;
         }
         /// <summary>
