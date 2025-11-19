@@ -48,6 +48,7 @@ namespace StudentTimeTrackerApp
             builder.Services.AddTransient<StudentService>();
             builder.Services.AddTransient<InstructorService>();
             builder.Services.AddTransient<CourseService>();
+            builder.Services.AddTransient<MessagePageService>();
     
             builder.Services.AddAuthentication(options =>
                 {

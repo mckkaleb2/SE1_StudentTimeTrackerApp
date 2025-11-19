@@ -1,31 +1,199 @@
 @page "/messaging"
+@using Microsoft.CodeAnalysis.CSharp.Syntax
+@using StudentTimeTrackerApp.Components.Account.Pages
+@using StudentTimeTrackerApp.Entities
+@using StudentTimeTrackerApp.Models.Entities
+@using StudentTimeTrackerApp.Models
+@using StudentTimeTrackerApp.Services
 @rendermode InteractiveServer
+@inject CourseService CourseService
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+@inject MessagePageService MPS
 
 <PageTitle>Messaging Page</PageTitle>
-<h1>Messaging</h1>
-<p>Wow so awesome</p>
-<p>Hamburger menu with user options goes to the left</p>
-<p>Messaging to the right maybe?</p>
+
+
+
 
 <div class="row">
     <div class="column left">
-        <input type="text" class="form-control" placeholder="Search users...">
-        <h5> Users </h5>
+        <div class="dropdown">
+            <button class="dropbtn">Classes</button>
+            <div class="dropdown-content">
+            @if(Courses.Count() != 0){
+                @foreach(Course item in Courses){
+                    <a> @item.GetCourseName() </a>
+                }
+            } else {
+                <a> nada </a>
+            }
+            </div>
+        </div>
+
+
+
+        <select class="form-select" @onchange="OnCourseChanged">
+            @foreach (var course in Courses)
+            {
+                <option value="@course.Id">@course.GetCourseName()</option>
+            }
+        </select>
+
+@* 
+        <li @onclick="(() => OnFruitClicked(fruit))"
+            style="font-size: 20px; cursor: pointer"
+            class="p-1 mb-1 @(selectedFruits.Contains(fruit) ? "bg-success" : null)">
+            @fruit
+        </li> *@
+
+        
+
+        @if(userDTOs != null && userDTOs.Count() != 0){
             <ul class="users">
-                <li> Us01 </li>
-                <li> Us02 </li>
-                <li> Us03 </li>
-                <li> Us04 </li>
-                <li> Us05 </li>
-                <li> Us06 </li>
-                <li> Us07 </li>
-                <li> Us08 </li>
+                @foreach(UserDTO user in userDTOs)
+                {
+                    @if(user.UserId != userId)
+                    {
+                        <li @onclick="(() => OnUserClicked(user))"
+                            style="cursor: pointer;">
+                            @if(user.UserId == recipientId)
+                            {
+                                <a style="background-color:gold">@user.GetFullName()</a>
+                            }
+                            else
+                            {
+                                <a>@user.GetFullName()</a>
+                            }
+                        </li>
+                    }
+@*                     <input Name="UserSelect" Label="Yes" @bind-Value="isYesOn" />
+ *@                    @* <RadioInput Name="EnableNotifications" Label="No" @bind-Value="isNoOn" /> *@
+
+                }
+                <!-- foreach users in CLASS add li object? -->
             </ul>
+        }
     </div>
     <div class="column right">
-        <Chat UserName="Billy Bob"></Chat>
+
+
+        @* <Chat UserName="Billy Bob"></Chat> *@
+
+        @{
+            if (_selectedCourse != null &&
+                _selectedCourseId != 0 &&
+                _selectedRecipient != null &&
+                recipientId != null &&
+                !string.IsNullOrWhiteSpace(recipientId)
+            )
+            {
+                <SignalChat User=@userId
+                            Recipient=@recipientId
+                            CourseId=@_selectedCourseId>
+                </SignalChat>
+
+            }    
+
+            else
+            {
+                <div>not selected</div>
+            }
+        }
+
+
     </div>
 </div>
+
+
+
+@code {
+
+    // private HashSet<string> selectedFruits = new HashSet<string>();
+
+    private List<Course> Courses = new List<Course>();
+    private List<UserDTO> userDTOs = new List<UserDTO>();
+
+    string? userId = string.Empty;
+    string? userName = string.Empty;
+    string? recipientId = string.Empty;
+
+    // set to student1@etsu.edu , Pass123!
+    string? testRecipientId = "a340066d-ebd9-49cb-9cbc-e60c50393ddc";
+    //private int _CourseId;
+    private int testCourseId = 1;
+
+    private UserDTO? _selectedRecipient;
+    private Course? _selectedCourse;
+    private int _selectedCourseId = 0;
+
+
+    public bool isSelected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity!.IsAuthenticated)
+        {
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            StateHasChanged(); // may be able to comment this out
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var courseGetter = MPS.GetCoursesByUserIdAsync(userId);
+                await Task.WhenAll(courseGetter);
+
+                Courses = courseGetter.Result.ToList();
+
+
+            }
+
+
+        }
+
+
+    }
+
+    private void OnCourseChanged(ChangeEventArgs e)
+    {
+
+        _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
+        _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
+
+        var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
+        if (userGetter != null){
+            userDTOs = userGetter.ToList();
+        }
+        else
+        {
+            userDTOs.Clear();
+        }
+
+        //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
+    }
+    // Grab the Students and Timecards to create the list of output.
+
+
+    private void OnUserClicked(UserDTO selectedUser)
+    {
+        _selectedRecipient = selectedUser;
+        recipientId = _selectedRecipient.UserId;
+
+        //SignalChat? chatComponent = this.FindComponent<SignalChat>();
+        StateHasChanged();
+        // if (!selectedFruits.Add(fruit))
+        // {
+        //     selectedFruits.Remove(fruit);
+        // }
+    }
+
+
+}
+
 
 <style>
     .column {
@@ -62,4 +230,40 @@
     li:last-child{
         border-bottom: none;
     }
+
+    .dropbtn {
+    background-color: #04AA6D;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    }
+
+    .dropdown {
+    position: relative;
+    display: inline-block;
+    }
+
+    .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    }
+
+    .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    }
+
+    .dropdown-content a:hover {background-color: #ddd;}
+
+    .dropdown:hover .dropdown-content {display: block;}
+
+    .dropdown:hover .dropbtn {background-color: #3e8e41;}
 </style>
+

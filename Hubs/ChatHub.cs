@@ -29,10 +29,11 @@ namespace StudentTimeTrackerApp.Hubs
         /// </remarks>
         /// <param name="user"></param>
         /// <param name="message"></param>
+        /// <param name="courseId"></param>
         /// <returns></returns>
-        public async Task SendMessage(string user, string message)
+        public async Task SendMessage(string user, string message, int courseId)
         {
-            await Clients.All.SendAsync("ReceiveMessage", user, message);
+            await Clients.All.SendAsync("ReceiveMessage", user, message, courseId);
         }
 
         /*-------------------------------------------------*/
@@ -52,17 +53,19 @@ namespace StudentTimeTrackerApp.Hubs
         /// <param name="recipient"></param>
         /// <param name="message">Body text or string of a message</param>
         /// <returns></returns>
-        public async Task Broadcast(string username, string recipient, string message)
+        public async Task Broadcast(string username, string recipient, string message, int courseId)
         {
             if (string.IsNullOrWhiteSpace(recipient)) // changed from .IsNullOrEmpty
             {
-                await Clients.All.SendAsync("Broadcast", username, message);
+                await Clients.All.SendAsync("Broadcast", username, message, courseId);
             }
             // Search for the recipient in the connected users dictionary
             else if (_connectedUsers.TryGetValue(recipient, out var connections) && connections.Count > 0)
             {
-                await Clients.Clients(connections).SendAsync("SendToUser", username, recipient, message);
+                //send to a specific user
+                await Clients.Clients(connections).SendAsync("RecieveFromUser", username, recipient, message, courseId);
             }
+            //await Clients.Caller.SendAsync();
         }
 
         public override async Task OnConnectedAsync()

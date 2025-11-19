@@ -8,6 +8,12 @@
 @inject StudentTimeTrackerApp.Services.CourseService CourseService
 @inject StudentTimeTrackerApp.Services.TimeCardService TimeCardService
 
+<style>
+    .studentTimeCards {
+
+    }
+</style>
+
 <h3>ViewTimeCards</h3>
 
 <div class="d-flex align-items-center gap-2 my-3">
@@ -24,6 +30,7 @@
 {
     @foreach (var student in selectedCourse!.Students)
     {
+       <br />
        <h2>@student.FirstName @student.LastName</h2>
        <IViewTimeCard StudentUserId="@student.UserID" />
        <br />
