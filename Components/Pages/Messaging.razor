@@ -10,6 +10,7 @@
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
 
+@attribute [StreamRendering]
 
 @inject MessagePageService MPS
 
@@ -21,45 +22,69 @@
 <div class="row">
     <div class="column left">
         <select class="form-select" @onchange="OnCourseChanged">
+            
+            <option value="" disabled selected>Select a course:</option>
             @foreach (var course in Courses)
             {
                 <option value="@course.Id">@course.GetCourseName()</option>
             }
+
         </select>
 
-@* 
-        <li @onclick="(() => OnFruitClicked(fruit))"
-            style="font-size: 20px; cursor: pointer"
-            class="p-1 mb-1 @(selectedFruits.Contains(fruit) ? "bg-success" : null)">
-            @fruit
-        </li> *@
-
         
+        @if(!(_selectedCourseId == 0)) //if there is a selected course, do the following
+        {
 
-        @if(userDTOs != null && userDTOs.Count() != 0){
             <ul class="users">
-                @foreach(UserDTO user in userDTOs)
-                {
-                    @if(user.UserId != userId)
-                    {
-                        <li @onclick="(() => OnUserClicked(user))"
-                            style="cursor: pointer;">
-                            @if(user.UserId == recipientId)
-                            {
-                                <a style="background-color:gold">@user.GetFullName()</a>
-                            }
-                            else
-                            {
-                                <a>@user.GetFullName()</a>
-                            }
-                        </li>
-                    }
-@*                     <input Name="UserSelect" Label="Yes" @bind-Value="isYesOn" />
- *@                    @* <RadioInput Name="EnableNotifications" Label="No" @bind-Value="isNoOn" /> *@
 
-                }
-                <!-- foreach users in CLASS add li object? -->
+                <li @onclick="(() => OnGroupClicked())"
+                    style="cursor: pointer;">
+                    @if (recipientId == "GROUP")
+                    {
+                        <a style="background-color:gold">@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                    else
+                    {
+                        <a>@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                </li>
+
+
+
+            @if (userDTOs == null)
+            {
+                <li><em>userDTOs is null</em></li>
+            }
+            else if (userDTOs != null && userDTOs.Count() <= 1)
+            {
+                <li><em>There's no one else in the class!</em></li>
+            }
+            else if(userDTOs != null && userDTOs.Count() != 0){
+                    @foreach(UserDTO user in userDTOs)
+                    {
+                        @if(user.UserId != userId)
+                        {
+                            <li @onclick="(() => OnUserClicked(user))"
+                                style="cursor: pointer;">
+                                @if(user.UserId == recipientId)
+                                {
+                                    <a style="background-color:gold">@user.GetFullName()</a>
+                                }
+                                else
+                                {
+                                    <a>@user.GetFullName()</a>
+                                }
+                            </li>
+                        }
+
+                    }
+                    <!-- foreach users in CLASS add li object? -->
+            }
             </ul>
+        }
+        else
+        {
+           <div><p>Select a course</p></div> 
         }
     </div>
     <div class="column right">
@@ -70,7 +95,7 @@
         @{
             if (_selectedCourse != null &&
                 _selectedCourseId != 0 &&
-                _selectedRecipient != null &&
+                //_selectedRecipient != null &&
                 recipientId != null &&
                 !string.IsNullOrWhiteSpace(recipientId)
             )
@@ -84,7 +109,7 @@
 
             else
             {
-                <div>not selected</div>
+                <div><p><em>Select a user to chat...</em></p></div>
             }
         }
 
@@ -175,11 +200,6 @@
     string? userName = string.Empty;
     string? recipientId = string.Empty;
 
-    // set to student1@etsu.edu , Pass123!
-    string? testRecipientId = "a340066d-ebd9-49cb-9cbc-e60c50393ddc";
-    //private int _CourseId;
-    private int testCourseId = 1;
-
     private UserDTO? _selectedRecipient;
     private Course? _selectedCourse;
     private int _selectedCourseId = 0;
@@ -199,10 +219,11 @@
 
             if (!string.IsNullOrEmpty(userId))
             {
-                var courseGetter = MPS.GetCoursesByUserIdAsync(userId);
-                await Task.WhenAll(courseGetter);
+                var courseGetter = await MPS.GetCoursesByUserIdAsync(userId);
+                //await Task.WhenAll(courseGetter);
 
-                Courses = courseGetter.Result.ToList();
+                //Courses = courseGetter.Result.ToList();
+                Courses = courseGetter.ToList();
 
 
             }
@@ -217,15 +238,20 @@
     {
 
         _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
-        _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
-
-        var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
-        if (userGetter != null){
-            userDTOs = userGetter.ToList();
-        }
-        else
+        if (_selectedCourseId != 0)
         {
-            userDTOs.Clear();
+            _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
+
+            var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
+            if (userGetter != null){
+                userDTOs = userGetter.ToList();
+            }
+            else
+            {
+                userDTOs.Clear();
+            }
+            _selectedRecipient = null;
+            recipientId = string.Empty;
         }
 
         //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
@@ -245,6 +271,16 @@
         //     selectedFruits.Remove(fruit);
         // }
     }
+
+
+    private void OnGroupClicked()
+    {
+        _selectedRecipient = null;
+        recipientId = "GROUP";
+
+        StateHasChanged();
+    }
+
 
 
 }

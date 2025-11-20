@@ -36,12 +36,22 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<Instructor?> GetInstructorByUserIdAsync(string userId)
         {
-            return await _context.Instructors
-                .Where(s => s.UserId == userId)
-                .FirstOrDefaultAsync();
+            try { 
+                return await _context.Instructors
+                    .Where(s => s.UserId == userId)
+                    .FirstOrDefaultAsync();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return null;
+            }
         }
 
-        public bool UserIsInstructor(string userId)
+            
+
+public bool UserIsInstructor(string userId)
         {
             return _context.Instructors.Any(i => i.UserId == userId);
         }
