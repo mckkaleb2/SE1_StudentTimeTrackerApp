@@ -438,6 +438,39 @@ namespace StudentTimeTrackerApp.Services
         }
 
 
+        public async Task<ICollection<Message>> GetMessagesForGroupChatInCourseAsync(string userId1,  int courseId)
+        {
+            //if (string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            //{
+            //    userId2 = string.Empty;
+            //}
+
+
+            var messages = await _context.Messages
+                //.ToAsyncEnumerable()
+                .Where(m => m.CourseId    == courseId &&
+                            ((m.Sender    == userId1) ||
+                             (m.Recipient == "GROUP")))
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+            return messages;
+        }
+
+
+        public async Task<ICollection<Message>> GetMessagesForChatAsync(string userId1, string? userId2, int courseID)
+        {
+            if (userId2 == "GROUP" || string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            {
+                ICollection<Message> outputer = await GetMessagesForGroupChatInCourseAsync(userId1, courseID);
+                return outputer;
+            }
+            else
+            {
+                ICollection<Message> outputer = await GetMessagesBetweenUsersInCourseAsync(userId1, userId2, courseID);
+                return outputer;
+            }
+
+        }
 
         // NOTE: Skipping update functions for messages, as they are generally not editable once sent.
         public void AddMessageToDatabase(string senderId, string? recipientId, int courseId, string body)
