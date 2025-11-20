@@ -484,10 +484,11 @@ else
         _isLoaded = false;
         // alternatively: create a method that Messaging will call when navigating to other users
         await DisconnectAsync();
-        await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+        //await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+        await SetChatParametersAsync(User, Recipient, CourseId);
 
         await Chat();
-
+        await Task.Delay(3);
         await LoadArchivedMessages();
 
         _isLoaded = true;
@@ -500,7 +501,7 @@ else
 
     private async Task LoadArchivedMessages()
     {
-        ICollection<Message> messages = await messagePageManager.GetMessagesBetweenUsersInCourseAsync(_UserName, _recipientUsername, _CourseId);
+        var messages = await messagePageManager.GetMessagesForChatAsync(_UserName, _recipientUsername, _CourseId);
 
         foreach(Message m in messages)
         {
