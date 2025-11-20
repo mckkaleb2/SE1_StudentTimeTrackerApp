@@ -119,17 +119,33 @@ public class CourseService
     // {
     //     return _context.Courses.FirstOrDefault(i => i.Id == id);
     // }
+
+    /// <summary>
+    /// Finds a particular Course object by its Id.
+    /// </summary>
+    /// <param name="courseId">The Id of the Course.</param>
+    /// <returns>The Course object.</returns>
     public Course? GetCourseById(int courseId)
     {
         return _context.Courses
             .FirstOrDefault(c => c.Id == courseId);
     }
 
+    /// <summary>
+    /// Finds a particular Course object by its Id asynchronously.
+    /// </summary>
+    /// <param name="id">The Id of the Course object.</param>
+    /// <returns>The Course object.</returns>
     public async Task<Course?> AsyncGetCourseByID(int id)
     {
         return await _context.Courses.FirstOrDefaultAsync(i => i.Id == id);
     }
 
+    /// <summary>
+    /// Finds all Student objects in a Course object.
+    /// </summary>
+    /// <param name="courseId">The Id of the Course object.</param>
+    /// <returns>The List of Student objects.</returns>
     public List<Student>? GetStudentsInCourse(int courseId)
     {
         var course = _context.Courses
@@ -142,8 +158,5 @@ public class CourseService
 
         return (List<Student>?)course.Students;
     }
-
-
-
 }
 

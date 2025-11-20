@@ -6,6 +6,10 @@ using StudentTimeTrackerApp.Models.Entities;
 
 namespace StudentTimeTrackerApp.Entities
 {
+    /// <summary>
+    /// Represents a student, holding data to identify that individual student.
+    /// Student objects are linked to Course and, indirectly, Instructor objects.
+    /// </summary>
     public class Student
     {
         [Key]
