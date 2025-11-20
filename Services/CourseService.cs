@@ -1,76 +1,72 @@
-using Microsoft.EntityFrameworkCore;
-using StudentTimeTrackerApp.Data;
-using StudentTimeTrackerApp.Entities;
-using StudentTimeTrackerApp.Models.Entities;
 using System;
 using System.Linq;
-namespace StudentTimeTrackerApp.Services;
+using StudentTimeTrackerApp.Models.Entities;
+using StudentTimeTrackerApp.Entities;
+using StudentTimeTrackerApp.Data;
+using Microsoft.EntityFrameworkCore;
 
-public class CourseService
+namespace StudentTimeTrackerApp.Services
 {
-    private readonly ApplicationDbContext _context; // Add a field for the context
-
-    public CourseService(ApplicationDbContext context) // Inject the context via constructor
+    public class CourseService
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
 
+        public CourseService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
-    /// <summary>
-    /// Creates a Course object. Can only be accessed by Instructors.
-    /// </summary>
-    /// <param name="userId">The Id of the currently logged in user.</param>
-    /// <param name="courseCode">The code for the Course object (i.e., CSCI, HIST, etc.)</param>
-    /// <param name="courseNum">The number of the Course object (i.e., 1120, 4250, etc.)</param>
-    /// <param name="sectionNum">The section number of the Course object.</param>
-    /// <returns>The error message, if there is one.</returns>
-    public string CreateCourse(string userId, string courseCode, int courseNum, int sectionNum)
-    {
-        string errorMessage = string.Empty;
-        var instructor = _context.Instructors
-            .FirstOrDefault(i => i.UserId == userId);
-
-        if (instructor == null)
+        /// <summary>
+        /// Creates a Course object. Can only be accessed by Instructors.
+        /// </summary>
+        /// <param name="userId">The Id of the currently logged in user.</param>
+        /// <param name="courseCode">The code for the Course object (i.e., CSCI, HIST, etc.)</param>
+        /// <param name="courseNum">The number of the Course object (i.e., 1120, 4250, etc.)</param>
+        /// <param name="sectionNum">The section number of the Course object.</param>
+        /// <returns>The error message, if there is one.</returns>
+        public string CreateCourse(string userId, string courseCode, int courseNum, int sectionNum)
         {
             string errorMessage = string.Empty;
             var instructor = _context.Instructors
                 .FirstOrDefault(i => i.UserId == userId);
 
-            if (instructor == null) {
+            if (instructor == null)
+            {
                 errorMessage = "Instructor was not found. Please try again.";
                 return errorMessage;
             }
-            if (string.IsNullOrEmpty(courseCode) || courseNum <= 0 || sectionNum <= 0) {
-                errorMessage = "Please fill out all fields correctly.";
-                return errorMessage;
-            }
+
             var course = new Course
             {
-                
+
                 CourseCode = courseCode,
                 CourseNum = courseNum,
                 SectionNum = sectionNum,
             };
 
             course.Instructors.Add(instructor);
-            try
-            {
-                _context.Courses.Add(course);
-                _context.SaveChanges();
-            } catch
-            {
-                errorMessage = "A course with that code, number, and section already exists.";
-            }
+
+            _context.Courses.Add(course);
+            _context.SaveChanges();
             return errorMessage;
         }
 
-        var course = new Course
+        /// <summary>
+        /// Finds and Adds a Student to a Course object. 
+        /// </summary>
+        /// <param name="userId">The Id of the currently logged in user.</param>
+        /// <param name="courseCode">The code for the Course object (i.e., CSCI, HIST, etc.)</param>
+        /// <param name="courseNum">The number of the Course object (i.e., 1120, 4250, etc.)</param>
+        /// <param name="sectionNum">The section number of the Course object.</param>
+        /// <returns>The error message, if there is one.</returns>
+        public string FindCourse(string userId, string courseCode, int courseNum, int sectionNum)
         {
             string errorMessage = string.Empty;
             var student = _context.Students
                 .FirstOrDefault(s => s.UserID == userId);
 
-            if (student == null) {
+            if (student == null)
+            {
                 errorMessage = "No student found. Please try again.";
                 return errorMessage;
             }
@@ -87,84 +83,57 @@ public class CourseService
                 errorMessage = "No course was found. Please try again.";
                 return errorMessage;
             }
-            try
-            {
-                student.Courses.Add(match);
-                match.Students.Add(student);
-                _context.SaveChanges();
-            } catch
-            {
-                errorMessage = "You are already enrolled in this course.";
-            }
+
+            student.Courses.Add(match);
+            match.Students.Add(student);
+            _context.SaveChanges();
             return errorMessage;
         }
-
-
-
-    /// <summary>
-    /// Finds the Course By the Id number
-    /// </summary>
-    /// <param name="courseId">The Id of the Course object.</param>
-    /// <returns>The Course object.</returns>
-    public Course? GetCourseById(int courseId)
-    {
-        student.Courses.Add(match);
-        match.Students.Add(student);
-        _context.SaveChanges();
-        return errorMessage;
-    }
-
-    /// <summary>
-    /// Finds all Courses taught by a specific Instructor.
-    /// </summary>
-    /// <param name="userId">The Id of the currently logged in user.</param
-    /// <returns>A list of Courses taught by the Instructor.</returns>
-    public List<Course>? FindCoursesByInstructor(string userId)
-    {
-        var instructor = _context.Instructors
-            .FirstOrDefault(i => i.UserId == userId);
-
-        if (instructor == null)
+        /// <summary>
+        /// Finds all Courses taught by a specific Instructor.
+        /// </summary>
+        /// <param name="userId">The Id of the currently logged in user.</param
+        /// <returns>A list of Courses taught by the Instructor.</returns>
+        public List<Course>? FindCoursesByInstructor(string userId)
         {
-            return null;
+            var instructor = _context.Instructors
+                .FirstOrDefault(i => i.UserId == userId);
+
+            if (instructor == null)
+            {
+                return null;
+            }
+
+            var courses = _context.Courses
+                .Where(c => c.Instructors.Contains(instructor))
+                .Include(c => c.Students)
+                .Include(c => c.Instructors)
+                .ToList();
+
+            return courses;
         }
 
-        var courses = _context.Courses
-            .Where(c => c.Instructors.Contains(instructor))
-            .Include(c => c.Students)
-            .Include(c => c.Instructors)
-            .ToList();
-
-        return courses;
-    }
-
-
-    // public Course? GetCourseByID(int id)
-    // {
-    //     return _context.Courses.FirstOrDefault(i => i.Id == id);
-    // }
-    public Course? GetCourseById(int courseId)
-    {
-        return _context.Courses
-            .FirstOrDefault(c => c.Id == courseId);
-    }
-
-    public async Task<Course?> AsyncGetCourseByID(int id)
-    {
-        return await _context.Courses.FirstOrDefaultAsync(i => i.Id == id);
-    }
-
-    public List<Student>? GetStudentsInCourse(int courseId)
-    {
-        var course = _context.Courses
-            .FirstOrDefault(c => c.Id == courseId);
-
-        if (course == null)
+        public Course? GetCourseById(int courseId)
         {
-            return null;
+            return _context.Courses
+                .FirstOrDefault(c => c.Id == courseId);
+        }
+        public async Task<Course?> AsyncGetCourseByID(int id)
+        {
+            return await _context.Courses.FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        return (List<Student>?)course.Students;
+        public List<Student>? GetStudentsInCourse(int courseId)
+        {
+            var course = _context.Courses
+                .FirstOrDefault(c => c.Id == courseId);
+
+            if (course == null)
+            {
+                return null;
+            }
+
+            return (List<Student>?)course.Students;
+        }
     }
 }
-
