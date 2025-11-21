@@ -15,15 +15,19 @@ namespace StudentTimeTrackerApp.Services
     public class MessagePageService
     {
         private readonly ApplicationDbContext _context; // Add a field for the context
+        //private readonly IDbContextFactory<ApplicationDbContext> _contextFactory; // Add a field for the context
+        
         private readonly StudentService _studentService;
         private readonly InstructorService _instructorService;
 
 
         public MessagePageService(ApplicationDbContext context,
+                                  //IDbContextFactory<ApplicationDbContext> contextFactory,
                                   InstructorService instructorService,
                                   StudentService studentService) // Inject the context via constructor
         {
             _context = context;
+            //_contextFactory = contextFactory;
             _instructorService = instructorService;
             _studentService = studentService;
         }
@@ -455,6 +459,8 @@ namespace StudentTimeTrackerApp.Services
             //{
             //    userId2 = string.Empty;
             //}
+            try
+            {
 
 
             // maybe we dont have to queryr sender at all?
@@ -466,6 +472,11 @@ namespace StudentTimeTrackerApp.Services
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
             return messages;
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to get group chat messages from database", e);
+            }
         }
 
 

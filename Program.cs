@@ -61,6 +61,10 @@ namespace StudentTimeTrackerApp
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString,
                     providerOptions => { providerOptions.EnableRetryOnFailure(); }));
+            // factory for adding fixes
+            //builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+            //    options.UseNpgsql(connectionString,
+            //        providerOptions => { providerOptions.EnableRetryOnFailure(); }));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

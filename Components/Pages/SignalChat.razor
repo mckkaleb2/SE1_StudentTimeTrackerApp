@@ -823,8 +823,9 @@ else
 
             if (_recipientUsername == "GROUP")
             {
-                m.fullNameUser = await getFullNameAsync(_UserName);
-                await Task.Delay(3);
+                //m.fullNameUser = "FULLNAMEUSER"; //await getFullNameAsync(_UserName);
+                m.fullNameUser = _displayNameUser; //await getFullNameAsync(_UserName);
+                //await Task.Delay(3);
                 //m.fullNameReciever = await getFullNameAsync(_recipientUsername);
                 m.fullNameReciever = _displayNameReciever;
             }
