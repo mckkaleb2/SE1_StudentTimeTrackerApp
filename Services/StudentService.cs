@@ -30,7 +30,17 @@ namespace StudentTimeTrackerApp.Services
 
         public Student? GetStudentByUserId(string userId)
         {
-            return _context.Students.FirstOrDefault(s => s.UserID == userId);
+            try
+            {
+                return _context.Students.FirstOrDefault(s => s.UserID == userId);
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine("\n\n", e, "\n\n");
+                return null;
+            }
+
         }
         public async Task<Student?> GetStudentByUserIdAsync(string userId)
         {
@@ -44,7 +54,7 @@ namespace StudentTimeTrackerApp.Services
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine("\n\n", e, "\n\n");
                 return null;
             }
             //await Task.WhenAll(waiter);

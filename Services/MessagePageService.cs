@@ -262,7 +262,11 @@ namespace StudentTimeTrackerApp.Services
         {
             //var waiter = Task.Run(() => _studentService.GetStudentByUserId(userId));
             //Student? stu = await waiter;
-            Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
+            Student? stu = await Task.Run(() => _studentService.GetStudentByUserId(userId));
+
+            //Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
+            
+            
             Instructor? ins = null;
             // if that fails, try to get info using instructor service
             if (stu == null)
@@ -300,6 +304,8 @@ namespace StudentTimeTrackerApp.Services
                 throw new NotImplementedException("User not found from ID");
             }
 
+            if (userOut.LastName == "CHAT")
+                await Task.Run(() => Console.WriteLine("CHAT"));
             return userOut;
 
         }
@@ -430,8 +436,8 @@ namespace StudentTimeTrackerApp.Services
             var messages =  await _context.Messages
                 //.ToAsyncEnumerable()
                 .Where(m => m.CourseId == courseId &&
-                            ((m.Sender == userId1 && m.Recipient == userId2) ||
-                             (m.Sender == userId2 && m.Recipient == userId1)))
+                            ((m.Sender == userId1 && m.Recipient == userId2 && m.Recipient != "GROUP") ||
+                             (m.Sender == userId2 && m.Recipient == userId1 && m.Recipient != "GROUP")))
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
             return messages;
@@ -440,21 +446,28 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<ICollection<Message>> GetMessagesForGroupChatInCourseAsync(string userId1,  int courseId)
         {
+            return await GetMessagesForGroupChatInCourseAsync( courseId);
+        }
+
+        public async Task<ICollection<Message>> GetMessagesForGroupChatInCourseAsync(int courseId)
+        {
             //if (string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
             //{
             //    userId2 = string.Empty;
             //}
 
 
+            // maybe we dont have to queryr sender at all?
             var messages = await _context.Messages
                 //.ToAsyncEnumerable()
-                .Where(m => m.CourseId    == courseId &&
-                            ((m.Sender    == userId1) ||
+                .Where(m => m.CourseId == courseId &&
+                            ( //(m.Sender    == userId1) ||
                              (m.Recipient == "GROUP")))
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
             return messages;
         }
+
 
 
         public async Task<ICollection<Message>> GetMessagesForChatAsync(string userId1, string? userId2, int courseID)
@@ -484,8 +497,17 @@ namespace StudentTimeTrackerApp.Services
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            _context.Messages.Add(message);
-            _context.SaveChanges();
+            try
+            {
+                _context.Messages.Add(message);
+                _context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to add message to database", e);
+
+            }
+
         }
 
         /// <summary>
@@ -508,8 +530,17 @@ namespace StudentTimeTrackerApp.Services
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            await _context.Messages.AddAsync(message);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Messages.AddAsync(message);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to add message to database", e);
+            }
+
+
         }
 
 

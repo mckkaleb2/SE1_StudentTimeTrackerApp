@@ -8,6 +8,7 @@
 @inject MessagePageService messagePageManager
 @inject StudentService studentManager
 @inject InstructorService instructorManager
+@inject CourseService courseManager
 @using StudentTimeTrackerApp.Entities;
 @using StudentTimeTrackerApp.Models.Entities;
 @using StudentTimeTrackerApp.Models;
@@ -127,6 +128,7 @@ else
 
 
 
+
             </div>
 
             <!-- ____________________________________________________ -->
@@ -143,8 +145,13 @@ else
                     V   *@
                 <button class="btn btn-default" @onclick="@(() => SendAsync(_newMessage))">Send</button>
             </div>
+            <hr />
+            <div id="roomInfo">
+                <p><small>You are connected as <b>@_displayNameUser</b></small></p>
+                <p><small>Chatting with: <b>@_displayNameReciever _ (@_courseDisplayName)</b></small></p>
 
-    
+            </div>
+
         </div>
 
 
@@ -244,6 +251,8 @@ else
     private List<string> _connectedUsers = new List<string>(); //NOTE: it might be worth checking the Type of this list later
     private List<string?> _connectedNames = new List<string?>(); //NOTE: it might be worth checking the Type of this list later
 
+    private List<PersonCourse> _courseUsers = new List<PersonCourse>();
+
     private HubConnection? _hubConnection;
     private string _hubUrl;
 
@@ -280,7 +289,7 @@ else
         return output;
     }
 
-
+    // FIXME: if userId==GROUP, setToNull
 
     private bool _isWaitingText = false;
 
@@ -291,31 +300,76 @@ else
     /// </summary>
     protected override async Task OnParametersSetAsync()
     {
-        if (!_isFirstLoad)
+        if (_isFirstLoad)
         {
-            _isLoaded = false;
-            await CloseAndClear();
-
-            bool same = true;
-            if (CourseId != _CourseId) same = false;
-
-            //await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
-            await SetChatParametersAsync(User, Recipient, CourseId);
+            _isFirstLoad = false;
+        }
+        else
+        {
+            await LoadAndFireAsync();
+        }
 
 
-            if (!same) {
-                _isWaitingText = true;
+    }
+
+    //private int _tracerRounds = 0;
+
+    /// <summary>
+    /// Send a tracer round during initialization, and load and fire the changes when parameters are set
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadAndFireAsync()
+    {
+
+        _isLoaded = false;
+
+        bool recipientChanged = (_recipientUsername != Recipient);
+        bool noLongerGroup = (_recipientUsername == "GROUP") && (Recipient != "GROUP");
+        bool courseChanged = (_CourseId != CourseId);
+        if ((noLongerGroup || courseChanged) && _hubConnection is not null)
+        {
+            await _hubConnection.SendAsync("RemoveUserFromGroupChat", _UserName, _CourseId, _userDisplayName);
+        }
+        else if ((recipientChanged || courseChanged) && _hubConnection is not null)
+        {
+            await _hubConnection.SendAsync("RemoveUserFromGroupDirect", _UserName, _recipientUsername, _CourseId, _userDisplayName);
+        }
+
+
+        await CloseAndClear();
+
+        bool same = true;
+        if (courseChanged) same = false;
+
+        //await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
+        await SetChatParametersAsync(User, Recipient, CourseId);
+        var course = await courseManager.AsyncGetCourseByID(CourseId);
+        if (course is not null) _courseDisplayName = course.GetCourseName();
+
+        if (!same && _isFirstLoad == false)
+        {
+            _isWaitingText = true;
+        }
+        else
+        {
+            await ConnectAndLoad();
+            if (_recipientUsername == "GROUP")
+            {
+                await _hubConnection.SendAsync("AddUserToGroupChat", _UserName, _CourseId, _userDisplayName);
             }
             else
             {
-                await ConnectAndLoad();
-                _isLoaded = true;
-                _isWaitingText = false;
-            }
+                await _hubConnection.SendAsync("AddUserToGroupDirect", _UserName, _recipientUsername, _CourseId, _userDisplayName);
 
+            }
+            _isLoaded = true;
+            _isWaitingText = false;
 
         }
+
     }
+
+
 
     /// <summary>
     /// close the connection and unload the lists of messages, names, and connected users
@@ -326,12 +380,22 @@ else
         // close the connection
         await DisconnectAsync();
 
-        // unload the lists of messages
-        _Messages.Clear();
-        _ArchiveMessages.Clear();
-        _connectedNames.Clear();
-        _connectedUsers.Clear();
+        await ClearLists();
+
     }
+
+    /// <summary>
+    /// unload the lists of messages
+    /// </summary>
+    /// <returns></returns>
+    private async Task ClearLists()
+    {
+        await Task.Run(() =>_Messages.Clear());
+        await Task.Run(() =>_ArchiveMessages.Clear());
+        await Task.Run(() =>_connectedNames.Clear());
+        await Task.Run(() =>_connectedUsers.Clear());
+    }
+
 
     /// <summary>
     /// set up a new connection and listeners, then load messages
@@ -350,9 +414,13 @@ else
 
 
         await Chat();
+
+        await Task.Delay(3);
+
         await LoadArchivedMessages();
     }
 
+    private string? _courseDisplayName;
 
     /// <summary>
     /// For use with:
@@ -420,8 +488,6 @@ else
         }
     }
 
-
-
     private void SetChatParameters(int courseId)
     {
         if (courseId != 0)
@@ -481,18 +547,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _isLoaded = false;
-        // alternatively: create a method that Messaging will call when navigating to other users
-        await DisconnectAsync();
-        //await Task.Run(() => SetChatParameters(User, Recipient, CourseId));
-        await SetChatParametersAsync(User, Recipient, CourseId);
-
-        await Chat();
-        await Task.Delay(3);
-        await LoadArchivedMessages();
-
-        _isLoaded = true;
-        _isFirstLoad = false;
+        await LoadAndFireAsync();
     }
 
 
@@ -501,7 +556,13 @@ else
 
     private async Task LoadArchivedMessages()
     {
+        // ICollection<Message> messages;
+
+        
         var messages = await messagePageManager.GetMessagesForChatAsync(_UserName, _recipientUsername, _CourseId);
+        
+
+
 
         foreach(Message m in messages)
         {
@@ -601,15 +662,23 @@ else
                     //_connectedNames = messagePageManager.GetFullNameFromUserIdList(_connectedUsers); 
                     await InvokeAsync(StateHasChanged);
                 });
+            // _hubConnection.On<IEnumerable<PersonCourse>>("UpdateConnectedCourseUsers", async (courseUsersList) =>
+            // {
+            //     _courseUsers = courseUsersList.ToList();
+            //     //_connectedNames = messagePageManager.GetFullNameFromUserIdList(_connectedUsers);
+            //     await InvokeAsync(StateHasChanged);
+            // });
+
 
             // Start the connection
             await _hubConnection.StartAsync();
             // Notify others of new user
-            
+
             _displayNameUser = await getFullNameAsync(_UserName);
-            
+
             await Task.Delay(2);
-            await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
+            if (_recipientUsername != "GROUP")
+                await SendAsync($"[Notice] {_displayNameUser} joined chat room.");
 
         }
         catch (Exception e)
@@ -654,29 +723,37 @@ else
     /// <param name="messageBody"></param>
     private async void RecieveFromUser(string senderUsername, string recieverUsername, string messageBody, int courseId)
     {
-        bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
-        var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
-        messageObj.RecieverUsername = recieverUsername;
-
-        if (_recipientUsername == "GROUP")
+        if 
+        (
+            ((senderUsername == _recipientUsername && recieverUsername == _UserName) ||
+                (senderUsername == _UserName && recieverUsername == _recipientUsername)) 
+            && (courseId == _CourseId)
+        )
         {
-            messageObj.fullNameReciever = await getFullNameAsync(senderUsername);
-            await Task.Delay(3);
-            messageObj.fullNameUser = await getFullNameAsync(recieverUsername);
+            bool isMine = senderUsername.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
+            var messageObj = new midMessage(senderUsername, messageBody, isMine, courseId);
+            messageObj.RecieverUsername = recieverUsername;
+
+            if (_recipientUsername == "GROUP")
+            {
+                messageObj.fullNameReciever = await getFullNameAsync(senderUsername);
+                await Task.Delay(3);
+                messageObj.fullNameUser = await getFullNameAsync(recieverUsername);
+            }
+            else
+            {
+                messageObj.fullNameReciever = _displayNameUser;
+                messageObj.fullNameUser = _displayNameReciever;
+            }
+
+            messageObj.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
+
+
+            _Messages.Add(messageObj);
+
+            // Inform blazor the UI needs updating
+            await InvokeAsync(StateHasChanged);
         }
-        else
-        {
-            messageObj.fullNameReciever = _displayNameUser;
-            messageObj.fullNameUser = _displayNameReciever;
-        }
-
-        messageObj.timestamp = $"{DateTime.Now}"; //Supply a false dateTime. I don't want to go through the trouble of pulling it from the db
-
-        
-        _Messages.Add(messageObj);
-
-        // Inform blazor the UI needs updating
-        await InvokeAsync(StateHasChanged);
     }
 
 
@@ -686,7 +763,8 @@ else
     {
         if (_isChatting)
         {
-            await SendAsync($"[Notice] {_displayNameUser} left chat room.");
+            if (_recipientUsername != "GROUP")
+                await SendAsync($"[Notice] {_displayNameUser} left chat room.");
 
             await _hubConnection.StopAsync();
             await DisposeAsync();
@@ -696,6 +774,17 @@ else
         }
     }
 
+    private async Task DisconnectSilentAsync()
+    {
+        if (_isChatting)
+        {
+            await _hubConnection.StopAsync();
+            await DisposeAsync();
+
+            _hubConnection = null;
+            _isChatting = false;
+        }
+    }
 
     /// <summary>
     /// Facilitates sending a message using the private _newMessage field. Allows to sidestep passing a variable to SendAsync()
@@ -730,7 +819,7 @@ else
 
             bool isMine = _UserName.Equals(_UserName, StringComparison.OrdinalIgnoreCase);
             midMessage m = new midMessage(_UserName, message, isMine, _CourseId);
-            
+
 
             if (_recipientUsername == "GROUP")
             {
@@ -745,13 +834,14 @@ else
                 m.fullNameReciever = _displayNameReciever;
             }
 
-            
+
             _Messages.Add(m);
             if (!m.IsNotice) // as long as a message isn't a notice, add it to the database
             {
+                await Task.Delay(3);
                 await messagePageManager.AddMessageToDatabaseAsync(_UserName, _recipientUsername, _CourseId, message);
             }
-
+            await Task.Delay(1);
             await InvokeAsync(StateHasChanged);
 
 
