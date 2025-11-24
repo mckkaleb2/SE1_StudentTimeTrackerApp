@@ -73,18 +73,23 @@ namespace StudentTimeTrackerApp.Services
                 //    .Where(c => c.Instructors.Any(i => i.UserId == userId))
                 //    .ToListAsync();
 
-                List<Course> taughtCourses = _context.Instructors
+                List<Course> taughtCourses = 
+                    await
+                    _context.Instructors
                     .Where(i => i.UserId == userId)
-                    .SelectMany(i => i.Courses).ToList();
-                //.ToListAsync();
+                    .SelectMany(i => i.Courses)
+                    // .ToList();
+                    .ToListAsync();
 
                 // get the courses that are enrolled in by the user, if any
-                List<Course> enrolledCourses = _context.Students
+                List<Course> enrolledCourses = 
+                    await
+                    _context.Students
                     //.Where(c => c.Students.Any(s => s.UserID == userId))
-                    //.ToListAsync();
                     .Where(s => s.UserID == userId)
                     .SelectMany(s => s.Courses)
-                    .ToList();
+                    .ToListAsync();
+                    // .ToList();
 
 
                 // create a new list that combines both lists without duplicates

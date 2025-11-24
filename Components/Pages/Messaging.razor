@@ -1,4 +1,5 @@
 @page "/messaging"
+@page "/messaging/{SelectedCourseId:int?}"
 @using Microsoft.CodeAnalysis.CSharp.Syntax
 @using StudentTimeTrackerApp.Components.Account.Pages
 @using StudentTimeTrackerApp.Entities
@@ -9,6 +10,7 @@
 @inject CourseService CourseService
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager uriHelper;
 
 @attribute [StreamRendering]
 
@@ -202,6 +204,9 @@
 
     private UserDTO? _selectedRecipient;
     private Course? _selectedCourse;
+
+    [Parameter]
+    public int? SelectedCourseId { get; set; }
     private int _selectedCourseId = 0;
 
 
@@ -209,6 +214,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+
         AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
         ClaimsPrincipal? user = authState.User;
 
@@ -225,6 +231,11 @@
                 //Courses = courseGetter.Result.ToList();
                 Courses = courseGetter.ToList();
 
+                if (SelectedCourseId != null && Courses.Any(c=>c.Id==SelectedCourseId))
+                {
+                    SetSelectedCourse((int)SelectedCourseId);
+                }
+
 
             }
 
@@ -236,14 +247,22 @@
 
     private void OnCourseChanged(ChangeEventArgs e)
     {
+        int tempId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
+        SetSelectedCourse(tempId);
 
-        _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
+    }
+    // Grab the Students and Timecards to create the list of output.
+
+    private void SetSelectedCourse(int courseId)
+    {
+        _selectedCourseId = courseId;
         if (_selectedCourseId != 0)
         {
             _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
 
             var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
-            if (userGetter != null){
+            if (userGetter != null)
+            {
                 userDTOs = userGetter.ToList();
             }
             else
@@ -256,7 +275,6 @@
 
         //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
     }
-    // Grab the Students and Timecards to create the list of output.
 
 
     private void OnUserClicked(UserDTO selectedUser)
@@ -272,13 +290,25 @@
         // }
     }
 
+    private bool _classSelectedOnce = false;
+    private string _destination = string.Empty;
 
     private void OnGroupClicked()
     {
-        _selectedRecipient = null;
-        recipientId = "GROUP";
+        _destination = uriHelper.Uri;
+        _destination = $"/Messaging/{_selectedCourseId}";
+        if (_classSelectedOnce)
+        {
+            uriHelper.NavigateTo(_destination, forceLoad: true);
+        }
+        else
+        {
+            _selectedRecipient = null;
+            recipientId = "GROUP";
 
-        StateHasChanged();
+            _classSelectedOnce = true;
+            StateHasChanged();
+        }
     }
 
 
