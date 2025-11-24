@@ -1,4 +1,15 @@
 # Student Time Tracker App
+This app allows students to log their time entries with location logging at clock-in.
+Instructors create courses, which students may join, and view the timecards of students
+enrolled in thier courses. 
+The app also includes a messaging function that includes chats between indivuals within the same course and course group chats.
+
+---
+### Group Members
+- Quinn Daniels
+- Ronan Eanes
+- Kaleb McKinney
+- Jacob Robidas
 
 ### Deployment Guide
 
