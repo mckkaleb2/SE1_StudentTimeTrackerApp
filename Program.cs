@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Hosting.StaticWebAssets;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
-using StudentTimeTrackerApp.Services;
 using StudentTimeTrackerApp.Components;
 using StudentTimeTrackerApp.Components.Account;
 using StudentTimeTrackerApp.Data;
 using StudentTimeTrackerApp.Hubs;
-
-using Microsoft.AspNetCore.Http.Connections;
+using StudentTimeTrackerApp.Services;
 
 
 //SignalR, BlazorHub, and .NET 8/9 : https://learn.microsoft.com/en-us/aspnet/core/blazor/fundamentals/signalr?view=aspnetcore-9.0#blazor-hub-options
@@ -27,6 +27,7 @@ namespace StudentTimeTrackerApp
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            //builder.Services.AddServerSideBlazor();
             builder.Services.AddSignalR(); // Messaging hub support
              
             /*
@@ -74,6 +75,12 @@ namespace StudentTimeTrackerApp
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
+
+            //if (builder.Environment.IsEnvironment("Local"))
+            //{
+                // https://github.com/dotnet/aspnetcore/issues/38212
+                StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
+            //}
 
             var app = builder.Build();
 
