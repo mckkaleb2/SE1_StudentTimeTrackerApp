@@ -4,6 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StudentTimeTrackerApp.Models.Entities
 {
+    /// <summary>
+    /// Represents an individual time entry, a single punch in/out.
+    /// Multiple of these objects make up a full timecard.
+    /// </summary>
     public class TimeEntry
     {
         public int Id { get; set; }

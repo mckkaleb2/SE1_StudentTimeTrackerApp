@@ -6,6 +6,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StudentTimeTrackerApp.Entities
 {
+    /// <summary>
+    /// Represents an instructor. Holds data to indentify that individual instructor.
+    /// Instructor objects are linked to Course objects and, indirectly, to Students.
+    /// </summary>
     public class Instructor
     {
         [Key]

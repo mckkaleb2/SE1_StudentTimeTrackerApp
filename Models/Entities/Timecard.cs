@@ -5,6 +5,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StudentTimeTrackerApp.Models.Entities
 {
+    /// <summary>
+    /// Represents an instance of a timecard. 
+    /// Holds multiple time entries. Used to keep track of student whereabouts.
+    /// </summary>
     public class Timecard
     {
         public int Id { get; set; }

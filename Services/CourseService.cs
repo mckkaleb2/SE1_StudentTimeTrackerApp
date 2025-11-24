@@ -113,6 +113,11 @@ namespace StudentTimeTrackerApp.Services
             return courses;
         }
 
+        /// <summary>
+        /// Find a Course object by its Id
+        /// </summary>
+        /// <param name="courseId">The Id of the Course object</param>
+        /// <returns>The Course object</returns>
         public Course? GetCourseById(int courseId)
         {
             return _context.Courses
@@ -123,6 +128,11 @@ namespace StudentTimeTrackerApp.Services
             return await _context.Courses.FirstOrDefaultAsync(i => i.Id == id);
         }
 
+        /// <summary>
+        /// Find all Student objects within a Course object
+        /// </summary>
+        /// <param name="courseId">The Id of the Course object.</param>
+        /// <returns>The Student objects as a List</returns>
         public List<Student>? GetStudentsInCourse(int courseId)
         {
             var course = _context.Courses
