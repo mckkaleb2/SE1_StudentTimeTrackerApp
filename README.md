@@ -5,6 +5,10 @@ enrolled in thier courses.
 The app also includes a messaging function that includes chats between indivuals within the same course and course group chats.
 
 ---
+
+Link to live demo (available until 12/01/2025 after class time): [Live Demo](https://se1-studenttimetrackerapp.fly.dev)
+
+---
 ### Group Members
 - Quinn Daniels
 - Ronan Eanes
