@@ -43,7 +43,17 @@ namespace StudentTimeTrackerApp.Services
         /// <returns>The Student object.</returns>
         public Student? GetStudentByUserId(string userId)
         {
-            return _context.Students.FirstOrDefault(s => s.UserID == userId);
+            try
+            {
+                return _context.Students.FirstOrDefault(s => s.UserID == userId);
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine("\n\n", e, "\n\n");
+                return null;
+            }
+
         }
 
         /// <summary>
@@ -53,11 +63,21 @@ namespace StudentTimeTrackerApp.Services
         /// <returns>The the Student object.</returns>
         public async Task<Student?> GetStudentByUserIdAsync(string userId)
         {
-            var waiter = _context.Students
-                .Where(s => s.UserID == userId)
-                .FirstOrDefaultAsync();
-            await Task.WhenAll(waiter);
-            return waiter.Result;
+            //await Task.Delay(3);
+            try
+            {
+                var waiter = await _context.Students
+                    .Where(s => s.UserID == userId)
+                    .FirstOrDefaultAsync();
+                return waiter;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("\n\n", e, "\n\n");
+                return null;
+            }
+            //await Task.WhenAll(waiter);
+            //return waiter.Result;
         }
 
         /// <summary>

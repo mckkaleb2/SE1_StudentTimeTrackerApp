@@ -59,7 +59,12 @@ namespace StudentTimeTrackerApp
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(connectionString));
+                options.UseNpgsql(connectionString,
+                    providerOptions => { providerOptions.EnableRetryOnFailure(); }));
+            // factory for adding fixes
+            //builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+            //    options.UseNpgsql(connectionString,
+            //        providerOptions => { providerOptions.EnableRetryOnFailure(); }));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)

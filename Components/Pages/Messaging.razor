@@ -10,6 +10,7 @@
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
 
+@attribute [StreamRendering]
 
 @inject MessagePageService MPS
 
@@ -20,61 +21,70 @@
 
 <div class="row">
     <div class="column left">
-        <div class="dropdown">
-            <button class="dropbtn">Classes</button>
-            <div class="dropdown-content">
-            @if(Courses.Count() != 0){
-                @foreach(Course item in Courses){
-                    <a> @item.GetCourseName() </a>
-                }
-            } else {
-                <a> nada </a>
-            }
-            </div>
-        </div>
-
-
-
         <select class="form-select" @onchange="OnCourseChanged">
+            
+            <option value="" disabled selected>Select a course:</option>
             @foreach (var course in Courses)
             {
                 <option value="@course.Id">@course.GetCourseName()</option>
             }
+
         </select>
 
-@* 
-        <li @onclick="(() => OnFruitClicked(fruit))"
-            style="font-size: 20px; cursor: pointer"
-            class="p-1 mb-1 @(selectedFruits.Contains(fruit) ? "bg-success" : null)">
-            @fruit
-        </li> *@
-
         
+        @if(!(_selectedCourseId == 0)) //if there is a selected course, do the following
+        {
 
-        @if(userDTOs != null && userDTOs.Count() != 0){
             <ul class="users">
-                @foreach(UserDTO user in userDTOs)
-                {
-                    @if(user.UserId != userId)
-                    {
-                        <li @onclick="(() => OnUserClicked(user))"
-                            style="cursor: pointer;">
-                            @if(user.UserId == recipientId)
-                            {
-                                <a style="background-color:gold">@user.GetFullName()</a>
-                            }
-                            else
-                            {
-                                <a>@user.GetFullName()</a>
-                            }
-                        </li>
-                    }
-@*                     <input Name="UserSelect" Label="Yes" @bind-Value="isYesOn" />
- *@                    @* <RadioInput Name="EnableNotifications" Label="No" @bind-Value="isNoOn" /> *@
 
-                }
-                <!-- foreach users in CLASS add li object? -->
+                <li @onclick="(() => OnGroupClicked())"
+                    style="cursor: pointer;">
+                    @if (recipientId == "GROUP")
+                    {
+                        <a style="background-color:gold">@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                    else
+                    {
+                        <a>@_selectedCourse.GetCourseName() Chat</a>
+                    }
+                </li>
+
+
+
+            @if (userDTOs == null)
+            {
+                <li><em>userDTOs is null</em></li>
+            }
+            else if (userDTOs != null && userDTOs.Count() <= 1)
+            {
+                <li><em>There's no one else in the class!</em></li>
+            }
+            else if(userDTOs != null && userDTOs.Count() != 0){
+                    @foreach(UserDTO user in userDTOs)
+                    {
+                        @if(user.UserId != userId)
+                        {
+                            <li @onclick="(() => OnUserClicked(user))"
+                                style="cursor: pointer;">
+                                @if(user.UserId == recipientId)
+                                {
+                                    <a style="background-color:gold">@user.GetFullName()</a>
+                                }
+                                else
+                                {
+                                    <a>@user.GetFullName()</a>
+                                }
+                            </li>
+                        }
+
+                    }
+                    <!-- foreach users in CLASS add li object? -->
+            }
             </ul>
+        }
+        else
+        {
+           <div><p>Select a course</p></div> 
         }
     </div>
     <div class="column right">
@@ -85,7 +95,7 @@
         @{
             if (_selectedCourse != null &&
                 _selectedCourseId != 0 &&
-                _selectedRecipient != null &&
+                //_selectedRecipient != null &&
                 recipientId != null &&
                 !string.IsNullOrWhiteSpace(recipientId)
             )
@@ -99,101 +109,13 @@
 
             else
             {
-                <div>not selected</div>
+                <div><p><em>Select a user to chat...</em></p></div>
             }
         }
 
 
     </div>
 </div>
-
-
-
-@code {
-
-    // private HashSet<string> selectedFruits = new HashSet<string>();
-
-    private List<Course> Courses = new List<Course>();
-    private List<UserDTO> userDTOs = new List<UserDTO>();
-
-    string? userId = string.Empty;
-    string? userName = string.Empty;
-    string? recipientId = string.Empty;
-
-    // set to student1@etsu.edu , Pass123!
-    string? testRecipientId = "a340066d-ebd9-49cb-9cbc-e60c50393ddc";
-    //private int _CourseId;
-    private int testCourseId = 1;
-
-    private UserDTO? _selectedRecipient;
-    private Course? _selectedCourse;
-    private int _selectedCourseId = 0;
-
-
-    public bool isSelected = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        ClaimsPrincipal? user = authState.User;
-
-        if (user.Identity!.IsAuthenticated)
-        {
-            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            StateHasChanged(); // may be able to comment this out
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                var courseGetter = MPS.GetCoursesByUserIdAsync(userId);
-                await Task.WhenAll(courseGetter);
-
-                Courses = courseGetter.Result.ToList();
-
-
-            }
-
-
-        }
-
-
-    }
-
-    private void OnCourseChanged(ChangeEventArgs e)
-    {
-
-        _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
-        _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
-
-        var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
-        if (userGetter != null){
-            userDTOs = userGetter.ToList();
-        }
-        else
-        {
-            userDTOs.Clear();
-        }
-
-        //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
-    }
-    // Grab the Students and Timecards to create the list of output.
-
-
-    private void OnUserClicked(UserDTO selectedUser)
-    {
-        _selectedRecipient = selectedUser;
-        recipientId = _selectedRecipient.UserId;
-
-        //SignalChat? chatComponent = this.FindComponent<SignalChat>();
-        StateHasChanged();
-        // if (!selectedFruits.Add(fruit))
-        // {
-        //     selectedFruits.Remove(fruit);
-        // }
-    }
-
-
-}
-
 
 <style>
     .column {
@@ -266,4 +188,101 @@
 
     .dropdown:hover .dropbtn {background-color: #3e8e41;}
 </style>
+
+@code {
+
+    // private HashSet<string> selectedFruits = new HashSet<string>();
+
+    private List<Course> Courses = new List<Course>();
+    private List<UserDTO> userDTOs = new List<UserDTO>();
+
+    string? userId = string.Empty;
+    string? userName = string.Empty;
+    string? recipientId = string.Empty;
+
+    private UserDTO? _selectedRecipient;
+    private Course? _selectedCourse;
+    private int _selectedCourseId = 0;
+
+
+    public bool isSelected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity!.IsAuthenticated)
+        {
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            StateHasChanged(); // may be able to comment this out
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var courseGetter = await MPS.GetCoursesByUserIdAsync(userId);
+                //await Task.WhenAll(courseGetter);
+
+                //Courses = courseGetter.Result.ToList();
+                Courses = courseGetter.ToList();
+
+
+            }
+
+
+        }
+
+
+    }
+
+    private void OnCourseChanged(ChangeEventArgs e)
+    {
+
+        _selectedCourseId = e.Value!.ToString() != null ? int.Parse(e.Value!.ToString()!) : 0;
+        if (_selectedCourseId != 0)
+        {
+            _selectedCourse = CourseService.GetCourseById(_selectedCourseId);
+
+            var userGetter = MPS.GetUsersByCourseId(_selectedCourseId);
+            if (userGetter != null){
+                userDTOs = userGetter.ToList();
+            }
+            else
+            {
+                userDTOs.Clear();
+            }
+            _selectedRecipient = null;
+            recipientId = string.Empty;
+        }
+
+        //Students = CourseService.GetStudentsInCourse(_selectedCourseId);
+    }
+    // Grab the Students and Timecards to create the list of output.
+
+
+    private void OnUserClicked(UserDTO selectedUser)
+    {
+        _selectedRecipient = selectedUser;
+        recipientId = _selectedRecipient.UserId;
+
+        //SignalChat? chatComponent = this.FindComponent<SignalChat>();
+        StateHasChanged();
+        // if (!selectedFruits.Add(fruit))
+        // {
+        //     selectedFruits.Remove(fruit);
+        // }
+    }
+
+
+    private void OnGroupClicked()
+    {
+        _selectedRecipient = null;
+        recipientId = "GROUP";
+
+        StateHasChanged();
+    }
+
+
+
+}
+
 

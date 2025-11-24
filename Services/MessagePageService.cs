@@ -15,15 +15,19 @@ namespace StudentTimeTrackerApp.Services
     public class MessagePageService
     {
         private readonly ApplicationDbContext _context; // Add a field for the context
+        //private readonly IDbContextFactory<ApplicationDbContext> _contextFactory; // Add a field for the context
+        
         private readonly StudentService _studentService;
         private readonly InstructorService _instructorService;
 
 
         public MessagePageService(ApplicationDbContext context,
+                                  //IDbContextFactory<ApplicationDbContext> contextFactory,
                                   InstructorService instructorService,
                                   StudentService studentService) // Inject the context via constructor
         {
             _context = context;
+            //_contextFactory = contextFactory;
             _instructorService = instructorService;
             _studentService = studentService;
         }
@@ -260,8 +264,13 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<UserDTO> GetDTOFromUserIdAsync(string userId)
         {
-            Student? stu =  _studentService.GetStudentByUserId(userId);
+            //var waiter = Task.Run(() => _studentService.GetStudentByUserId(userId));
+            //Student? stu = await waiter;
+            Student? stu = await Task.Run(() => _studentService.GetStudentByUserId(userId));
+
             //Student? stu = await _studentService.GetStudentByUserIdAsync(userId);
+            
+            
             Instructor? ins = null;
             // if that fails, try to get info using instructor service
             if (stu == null)
@@ -286,11 +295,21 @@ namespace StudentTimeTrackerApp.Services
 
                 //Email = email;
             }
+            else if (ins == null && null == stu)
+            {
+                userOut.UserId = "GROUP";
+                userOut.FirstName = "GROUP";
+                userOut.LastName = "CHAT";
+                
+            }
+                    
             else
             {
                 throw new NotImplementedException("User not found from ID");
             }
 
+            if (userOut.LastName == "CHAT")
+                await Task.Run(() => Console.WriteLine("CHAT"));
             return userOut;
 
         }
@@ -306,11 +325,13 @@ namespace StudentTimeTrackerApp.Services
 
         public async Task<string?> GetFullNameFromUserIdAsync(string userId)
         {
-            var data = GetDTOFromUserIdAsync(userId);
+            //var data = GetDTOFromUserIdAsync(userId);
+            var data = await GetDTOFromUserIdAsync(userId);
 
-            await Task.WhenAll(data);
+            //await Task.WhenAll(data);
             
-            string output = data.Result.GetFullName();
+            //string output = data.Result.GetFullName();
+            string output = data.GetFullName();
             return output;
         }
 
@@ -333,9 +354,11 @@ namespace StudentTimeTrackerApp.Services
             List<string?> tempnames = new();
             foreach(var user in userIds)
             {
-                var tempDto = GetFullNameFromUserIdAsync(user);
-                await Task.WhenAll(tempDto);
-                tempnames.Add(tempDto.Result);
+                //var tempDto = GetFullNameFromUserIdAsync(user);
+                var tempDto = await GetFullNameFromUserIdAsync(user);
+                //await Task.WhenAll(tempDto);
+                //tempnames.Add(tempDto.Result);
+                tempnames.Add(tempDto);
             }
             return tempnames;
         }
@@ -347,20 +370,22 @@ namespace StudentTimeTrackerApp.Services
         /// <returns></returns>
         public async Task<IList<UserDTO>?> GetUsersByCourseIdAsync(int courseId)
         {
-            var instructorDtos = GetInstructorDTOsByCourseIdAsync(courseId);
-            await Task.WhenAll(instructorDtos);
+            var instructorDtos = await GetInstructorDTOsByCourseIdAsync(courseId);
+            //await Task.WhenAll(instructorDtos);
 
-            var studentDtos = GetStudentDTOsByCourseIdAsync(courseId);
-            await Task.WhenAll(studentDtos);
+            var studentDtos = await GetStudentDTOsByCourseIdAsync(courseId);
+            //await Task.WhenAll(studentDtos);
 
-            if (instructorDtos.Result == null || studentDtos.Result == null)
+            //if (instructorDtos.Result == null || studentDtos.Result == null)
+            if (instructorDtos == null || studentDtos == null)
             {
                 Console.WriteLine("ONE OF THE FOLLOWING IS NULL:");
                 Console.WriteLine(instructorDtos);
                 Console.WriteLine(studentDtos);
             }
 
-            var allUsers = instructorDtos.Result.Union(studentDtos.Result).ToList(); 
+            //var allUsers = instructorDtos.Result.Union(studentDtos.Result).ToList(); 
+            var allUsers = instructorDtos.Union(studentDtos).ToList(); 
             //var result = await GetUnion(instructorDtos, studentDtos);
 
 
@@ -415,14 +440,61 @@ namespace StudentTimeTrackerApp.Services
             var messages =  await _context.Messages
                 //.ToAsyncEnumerable()
                 .Where(m => m.CourseId == courseId &&
-                            ((m.Sender == userId1 && m.Recipient == userId2) ||
-                             (m.Sender == userId2 && m.Recipient == userId1)))
+                            ((m.Sender == userId1 && m.Recipient == userId2 && m.Recipient != "GROUP") ||
+                             (m.Sender == userId2 && m.Recipient == userId1 && m.Recipient != "GROUP")))
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
             return messages;
         }
 
 
+        public async Task<ICollection<Message>> GetMessagesForGroupChatInCourseAsync(string userId1,  int courseId)
+        {
+            return await GetMessagesForGroupChatInCourseAsync( courseId);
+        }
+
+        public async Task<ICollection<Message>> GetMessagesForGroupChatInCourseAsync(int courseId)
+        {
+            //if (string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            //{
+            //    userId2 = string.Empty;
+            //}
+            try
+            {
+
+
+            // maybe we dont have to queryr sender at all?
+            var messages = await _context.Messages
+                //.ToAsyncEnumerable()
+                .Where(m => m.CourseId == courseId &&
+                            ( //(m.Sender    == userId1) ||
+                             (m.Recipient == "GROUP")))
+                .OrderBy(m => m.Timestamp)
+                .ToListAsync();
+            return messages;
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to get group chat messages from database", e);
+            }
+        }
+
+
+
+        public async Task<ICollection<Message>> GetMessagesForChatAsync(string userId1, string? userId2, int courseID)
+        {
+            if (userId2 == "GROUP" || string.IsNullOrEmpty(userId2) || string.IsNullOrWhiteSpace(userId2))
+            {
+                ICollection<Message> outputer = await GetMessagesForGroupChatInCourseAsync(userId1, courseID);
+                return outputer;
+            }
+            else
+            {
+                ICollection<Message> outputer = await GetMessagesBetweenUsersInCourseAsync(userId1, userId2, courseID);
+                return outputer;
+            }
+
+        }
 
         // NOTE: Skipping update functions for messages, as they are generally not editable once sent.
         public void AddMessageToDatabase(string senderId, string? recipientId, int courseId, string body)
@@ -436,8 +508,17 @@ namespace StudentTimeTrackerApp.Services
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            _context.Messages.Add(message);
-            _context.SaveChanges();
+            try
+            {
+                _context.Messages.Add(message);
+                _context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to add message to database", e);
+
+            }
+
         }
 
         /// <summary>
@@ -454,13 +535,23 @@ namespace StudentTimeTrackerApp.Services
             var message = new Message
             {
                 Sender = senderId,
+                //Recipient = recipientId ?? "GROUP",
                 Recipient = recipientId ?? string.Empty,
                 CourseId = courseId,
                 Body = body,
                 Timestamp = DateTime.UtcNow
             };
-            await _context.Messages.AddAsync(message);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Messages.AddAsync(message);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Failed to add message to database", e);
+            }
+
+
         }
 
 
