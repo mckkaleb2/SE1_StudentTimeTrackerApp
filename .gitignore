@@ -3,10 +3,6 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
-# app settings so that we don't publicly display the connection string.
-#   a better way of doing this would be with .env files, but oh well
-appsettings.json
-
 # dotenv files
 .env
 
