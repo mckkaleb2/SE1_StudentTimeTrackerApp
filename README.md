@@ -15,15 +15,20 @@ Link to live demo (available until 12/01/2025 after class time): [Live Demo](htt
 - Kaleb McKinney
 - Jacob Robidas
 
-### Deployment Guide
+### Installation Guide
 
-After cloning or downloading the source code, use the included Dockerfile to 
+You can find our latest release user Releases, at https://github.com/mckkaleb2/SE1_StudentTimeTrackerApp/releases/ . Upon installing the version for your Operating System, unzip the folder, and click the shortcut to start the backend of the app. From there, simply navigate to `http://localhost:5000` within a web browser.
+
+
+### Docker Deployment Guide
+
+After cloning or downloading the source code, first create an `appsettings.json` file based on the `appsettings.template.txt` file, and replace the `"DefaultConnection"` with the connection string for your database. In our version, we used a PostGre database hosted through Neon. After the initial step, use the included Dockerfile to 
 build a Docker image to the deploy in the location of your choice:  <br/>
 `
 docker build -t <image_name>:<tag_verion>
 ` <br/>
 where <image_name> and <tag_version> are the name you want to give the image and the 
-version you wish to assign to it. Thay can also be ommitted if you don't want to specify:  <br/>
+version you wish to assign to it. They can also be ommitted if you don't want to specify:  <br/>
 `
 docker build
 ` <br/>
