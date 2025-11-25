@@ -17,7 +17,7 @@ Link to live demo (available until 12/01/2025 after class time): [Live Demo](htt
 
 ### Installation Guide
 
-You can find our latest release user Releases, at https://github.com/mckkaleb2/SE1_StudentTimeTrackerApp/releases/ . Upon installing the version for your Operating System, unzip the folder, and click the shortcut to start the backend of the app. From there, simply navigate to `http://localhost:5000` within a web browser.
+You can find our latest release user releases, at https://github.com/mckkaleb2/SE1_StudentTimeTrackerApp/releases/ . Upon installing the version for your Operating System, unzip the folder, and click the shortcut to start the backend of the app. From there, simply navigate to `http://localhost:5000` within a web browser.
 
 
 ### Docker Deployment Guide
