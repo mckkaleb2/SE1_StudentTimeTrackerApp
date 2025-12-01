@@ -1,0 +1,22 @@
+This is the user manual for this application. Overall, the application is simple, with only a few functions depending on whether you are a student or an instructor.
+
+Firstly, you need to register or login if you've registered before. To do so, simple click on either the 'Register' button in the top navigation bar or the one in the center of the landing page. Then, you can enter your information and select whether you are a student or an instructor.
+
+Students
+For the students, you have a few pages. First, you have your home page which has the timeclock. Simply click the 'Clock in' button when you are ready to clock in for your assignment/exercise and, once your finished, click the 'Clock out' button. This will create a timecard for you and your instructor to view. Note: if your location data is not turned on, then the accuracy of the location snapshot will be very low. Make sure that it is on when you are using the app.
+Additionally, there is a Join Course function at the bottom of the home page. This will let you join a course. Once you've joined a course, the instructor of that course can view your timecards and you are allowed to message other students and instructors in that course. To join a course, enter the course's code, number, and section number (i.e., HIST, 1010, 001) in each of the respective input boxes and click 'Submit'. If the course you are attempting to join exists, you will be added to it.
+
+Next, you have your timecards page. This page allows you to view all of your timecards. You can see when you clocked in and out and allows you to view the location snapshot that was taken.
+
+Finally, the messages page allows you to message other students and instructors. First, you need to select a course. This will show you all the other students and instructors in that course. Then, you can select another user. You will be able to see all previous messages and send new ones to that user.
+
+That's pretty much all for the student side of things. Hope you enjoy the app!
+
+Instructors
+Instructors have a three pages to use. The first of which is the home page. Here, you can create a course for students to join. Just enter the course's code, number, and section number (i.e., HIST, 1010, 001) in the respective fields and click 'Submit'. So long as no other courses have those values, the course should be created. 
+
+The second page is View Timecards. On this page, you can view the timecards of all the students in each of your courses. All you need to do is select a course from the dropdown menu and the timecards of each of the students should populate below it. You can see when the student clocked in and out and where by clicking the 'View Location' button. This will show you the student's location when he/she clocked in/out on Google Maps. You may also refresh an individual student's timecards to see if any new additions were made.
+
+Finally, the messaging page allows you to communicate with your students. First, select a course. When you do so, the students within that course will populate below the selection. Then, select a student to see the message history and send new messages.
+
+That's everything! Not a very complicated app, but one we hope will help.
